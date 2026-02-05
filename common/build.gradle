@@ -1,0 +1,35 @@
+architectury {
+    common rootProject.enabled_platforms.split(',')
+}
+
+dependencies {
+    // We depend on Fabric Loader here to use the Fabric @Environment annotations,
+    // which get remapped to the correct annotations on each platform.
+    // Do NOT use other classes from Fabric Loader.
+    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
+
+    // Architectury API. This is optional, and you can comment it out if you don't need it.
+    modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
+
+    // ====== Vouch MVP Dependencies ======
+
+    // Argon2id password hashing (pure Java, no native libs)
+    implementation "org.bouncycastle:bcprov-jdk18on:${rootProject.bouncycastle_version}"
+
+    // QR Code generation for TOTP setup (core only, no AWT)
+    implementation "com.google.zxing:core:${rootProject.zxing_version}"
+
+    // High-performance connection pool
+    implementation "com.zaxxer:HikariCP:${rootProject.hikaricp_version}"
+
+    // Embedded database (default, pure Java with MVCC)
+    implementation "com.h2database:h2:${rootProject.h2_version}"
+
+    // Production database drivers (optional, runtime only)
+    runtimeOnly "com.mysql:mysql-connector-j:${rootProject.mysql_version}"
+    runtimeOnly "org.postgresql:postgresql:${rootProject.postgresql_version}"
+
+    // NightConfig TOML (for configuration - same version as NeoForge)
+    implementation "com.electronwill.night-config:core:${rootProject.nightconfig_version}"
+    implementation "com.electronwill.night-config:toml:${rootProject.nightconfig_version}"
+}

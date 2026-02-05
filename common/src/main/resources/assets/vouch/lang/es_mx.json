@@ -1,0 +1,93 @@
+{
+  "_comment": "Vouch Authentication Mod - Español (México)",
+  "_version": "0.1.0",
+  
+  "vouch.auth.welcome.unregistered": "&6¡Bienvenido! Regístrate con: &f/register <contraseña> <contraseña>",
+  "vouch.auth.welcome.registered": "&6¡Bienvenido de nuevo! Inicia sesión con: &f/login <contraseña>",
+  "vouch.auth.welcome.2fa_only.unregistered": "&6¡Bienvenido! Usa &f/register &6para configurar 2FA",
+  "vouch.auth.welcome.2fa_only.registered": "&6¡Bienvenido de nuevo! Usa: &f/login <código> &6con tu código de autenticador",
+  
+  "vouch.auth.login.success": "&a¡Inicio de sesión exitoso! Bienvenido de nuevo.",
+  "vouch.auth.login.wrong_password": "&c¡Contraseña incorrecta!",
+  "vouch.auth.login.too_many_attempts": "&c¡Demasiados intentos fallidos! Espera antes de intentar de nuevo.",
+  "vouch.auth.login.locked_out": "&cCuenta bloqueada. Intenta de nuevo en {time} segundos.",
+  
+  "vouch.auth.register.success": "&a¡Registro exitoso! Ya estás conectado.",
+  "vouch.auth.register.success_2fa": "&a¡Registro exitoso! Escanea el código QR para completar.",
+  "vouch.auth.register.password_mismatch": "&c¡Las contraseñas no coinciden! Intenta de nuevo.",
+  "vouch.auth.register.password_too_short": "&c¡Contraseña muy corta! Mínimo {min} caracteres.",
+  "vouch.auth.register.password_too_long": "&c¡Contraseña muy larga! Máximo {max} caracteres.",
+  "vouch.auth.register.already_registered": "&c¡Ya estás registrado! Usa /login en su lugar.",
+  
+  "vouch.auth.not_registered": "&c¡No estás registrado! Usa /register primero.",
+  "vouch.auth.already_logged_in": "&e¡Ya has iniciado sesión!",
+  "vouch.auth.timeout": "Tiempo de autenticación agotado. Reconéctate e intenta de nuevo.",
+  "vouch.auth.session_restored": "&a¡Sesión restaurada! Bienvenido de nuevo.",
+  "vouch.auth.session_expired": "&cTu sesión ha expirado. Por favor reconéctate.",
+  
+  "vouch.auth.logout.success": "&eHas cerrado sesión. Sesión invalidada.",
+  "vouch.auth.logout.kick": "Has cerrado sesión. Reconéctate para autenticarte.",
+  
+  "vouch.jail.chat_blocked": "&c¡No puedes chatear hasta que te autentiques!",
+  "vouch.jail.action_blocked": "&c¡No puedes hacer eso hasta que te autentiques!",
+  "vouch.jail.command_blocked": "&c¡Solo puedes usar comandos de autenticación ahora mismo!",
+  "vouch.jail.processing": "&7Procesando...",
+  
+  "vouch.2fa.required": "&e2FA está habilitado. Usa: &f/2fa verify <código>",
+  "vouch.2fa.setup.instructions": "&eEscanea el código QR con tu app de autenticación, luego usa: &f/2fa verify <código>",
+  "vouch.2fa.setup.manual_secret": "&7Entrada manual: &b{secret}",
+  "vouch.2fa.setup.failed": "&cError al generar código QR. Intenta de nuevo.",
+  "vouch.2fa.enabled": "&a¡2FA ha sido habilitado exitosamente!",
+  "vouch.2fa.disabled": "&e2FA ha sido deshabilitado.",
+  "vouch.2fa.invalid_code": "&cCódigo 2FA inválido. Intenta de nuevo.",
+  "vouch.2fa.already_enabled": "&e¡2FA ya está habilitado! Usa &f/2fa disable <código>&e para deshabilitarlo primero.",
+  "vouch.2fa.not_enabled": "&e2FA no está habilitado. Usa &f/2fa setup&e para habilitarlo.",
+  "vouch.2fa.nothing_pending": "&eNo hay acción 2FA pendiente. Usa &f/2fa setup&e para configurar 2FA.",
+  "vouch.2fa.status.enabled": "&7Estado 2FA: &aHABILITADO",
+  "vouch.2fa.status.disabled": "&7Estado 2FA: &cDESHABILITADO &7- Usa /2fa setup para habilitar",
+  "vouch.2fa.must_login_first": "&c¡Primero debes iniciar sesión!",
+  "vouch.2fa.required_for_ops": "&eComo operador, debes habilitar 2FA. Usa: &f/2fa setup",
+  
+  "vouch.admin.player_unregistered": "&aJugador &6{player}&a ha sido desregistrado.",
+  "vouch.admin.player_not_found": "&cJugador &6{player}&c no encontrado o no registrado.",
+  "vouch.admin.player_2fa_reset": "&a2FA ha sido reiniciado para el jugador &6{player}&a.",
+  "vouch.admin.config_reloaded": "&a¡Configuración recargada exitosamente!",
+  "vouch.admin.lang_exported": "&aArchivo de idioma exportado a: &f{path}",
+  "vouch.admin.database_error": "&cOcurrió un error de base de datos. Revisa los logs del servidor.",
+  "vouch.admin.no_permission": "&cNo tienes permiso para usar este comando.",
+  
+  "vouch.ui.title.welcome": "&6Autenticación Requerida",
+  "vouch.ui.title.login_success": "&a✓ ¡Bienvenido!",
+  "vouch.ui.title.register_success": "&a✓ ¡Registrado!",
+  "vouch.ui.title.wrong_password": "&c✗ Contraseña Incorrecta",
+  "vouch.ui.title.2fa_success": "&a✓ ¡2FA Verificado!",
+  
+  "vouch.ui.subtitle.unregistered": "&eUsa &f/register &epara comenzar",
+  "vouch.ui.subtitle.registered": "&eUsa &f/login &epara continuar",
+  "vouch.ui.subtitle.2fa_only.unregistered": "&eUsa &f/register &epara configurar 2FA",
+  "vouch.ui.subtitle.2fa_only.registered": "&eIngresa tu código de 6 dígitos",
+  "vouch.ui.subtitle.login_success": "&7Ya has iniciado sesión",
+  "vouch.ui.subtitle.register_success": "&7Tu cuenta ha sido creada",
+  "vouch.ui.subtitle.wrong_password": "&7Intenta de nuevo",
+  
+  "vouch.ui.actionbar.pre_auth": "&e⏳ Tiempo restante: &f{time}s &8| &e/login o /register",
+  "vouch.ui.actionbar.pre_auth_2fa_only": "&e⏳ Tiempo restante: &f{time}s &8| &e/register o /login <código>",
+  "vouch.ui.actionbar.awaiting_2fa": "&6🔐 Ingresa tu código 2FA: &f/2fa verify <código>",
+  "vouch.ui.actionbar.rate_limited": "&c⏰ Demasiados intentos. Espera &f{time}s",
+  
+  "vouch.ui.bossbar.text": "&e🔒 Autenticación Requerida - {time}s restantes",
+  "vouch.ui.bossbar.awaiting_2fa": "&6🔐 Verificación 2FA Requerida",
+  
+  "vouch.command.usage.register": "&eUso: &f/register <contraseña> <confirmar_contraseña>",
+  "vouch.command.usage.register_2fa": "&eUso: &f/register &7(genera código QR 2FA)",
+  "vouch.command.usage.login": "&eUso: &f/login <contraseña>",
+  "vouch.command.usage.login_2fa": "&eUso: &f/login <código_2fa>",
+  "vouch.command.usage.2fa_verify": "&eUso: &f/2fa verify <código>",
+  "vouch.command.usage.2fa_disable": "&eUso: &f/2fa disable <código>",
+  
+  "vouch.command.disabled.2fa": "&cLa autenticación de dos factores está deshabilitada en este servidor.",
+  "vouch.command.disabled.password": "&cLa autenticación por contraseña está deshabilitada en este servidor.",
+  
+  "vouch.error.internal": "&cOcurrió un error interno. Contacta a un administrador.",
+  "vouch.error.database": "&cNo se pudo conectar a la base de datos. Intenta más tarde."
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "vouch",
+  "version": "${version}",
+  "name": "Vouch",
+  "description": "Industrial-grade server-side authentication with Argon2id hashing, TOTP 2FA, and multi-database support.",
+  "authors": [
+    "com.nozz"
+  ],
+  "contact": {
+    "homepage": "https://github.com/nozz/vouch",
+    "sources": "https://github.com/nozz/vouch"
+  },
+  "license": "ARR",
+  "icon": "assets/vouch/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "server": [
+      "com.nozz.vouch.fabric.VouchFabric"
+    ]
+  },
+  "mixins": [
+    "vouch.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "architectury": ">=13.0.8",
+    "fabric-api": "*"
+  }
+}

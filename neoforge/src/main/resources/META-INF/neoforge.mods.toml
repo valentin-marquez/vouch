@@ -1,0 +1,44 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "ARR"
+issueTrackerURL = "https://github.com/nozz/vouch/issues"
+
+[[mods]]
+modId = "vouch"
+version = "${version}"
+displayName = "Vouch"
+authors = "com.nozz"
+description = '''
+Industrial-grade server-side authentication for Minecraft.
+
+Features:
+- Argon2id password hashing (async, no TPS impact)
+- TOTP 2FA with in-game QR code rendering
+- Multi-database support (H2/SQLite/MySQL/PostgreSQL)
+- Session persistence for seamless reconnects
+'''
+#logoFile = ""
+
+[[dependencies.vouch]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "SERVER"
+
+[[dependencies.vouch]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,)"
+ordering = "NONE"
+side = "SERVER"
+
+[[dependencies.vouch]]
+modId = "architectury"
+type = "required"
+versionRange = "[13.0.8,)"
+ordering = "AFTER"
+side = "SERVER"
+
+[[mixins]]
+config = "vouch.mixins.json"

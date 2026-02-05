@@ -1,0 +1,146 @@
+name: Publish Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  MINECRAFT_VERSION: "1.21.1"
+  JAVA_VERSION: "21"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Upload Fabric JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabric-jar
+          path: fabric/build/libs/vouch-fabric-*.jar
+          if-no-files-found: error
+
+      - name: Upload NeoForge JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: neoforge-jar
+          path: neoforge/build/libs/vouch-neoforge-*.jar
+          if-no-files-found: error
+
+  publish-fabric:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Fabric JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: fabric-jar
+          path: fabric-artifacts
+
+      - name: Determine version type
+        id: version_type
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          if [[ "$TAG" == *"-alpha"* ]]; then
+            echo "type=alpha" >> $GITHUB_OUTPUT
+          elif [[ "$TAG" == *"-beta"* ]] || [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            echo "type=beta" >> $GITHUB_OUTPUT
+          else
+            echo "type=release" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish Fabric to Modrinth & CurseForge
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+          files: fabric-artifacts/vouch-fabric-*.jar
+          name: "Vouch ${{ github.event.release.tag_name }} (Fabric)"
+          version: ${{ github.event.release.tag_name }}
+          version-type: ${{ steps.version_type.outputs.type }}
+          changelog: ${{ github.event.release.body }}
+          game-versions: ${{ env.MINECRAFT_VERSION }}
+          loaders: fabric
+          dependencies: |
+            fabric-api | depends
+            architectury-api | depends
+
+  publish-neoforge:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download NeoForge JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: neoforge-jar
+          path: neoforge-artifacts
+
+      - name: Determine version type
+        id: version_type
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          if [[ "$TAG" == *"-alpha"* ]]; then
+            echo "type=alpha" >> $GITHUB_OUTPUT
+          elif [[ "$TAG" == *"-beta"* ]] || [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            echo "type=beta" >> $GITHUB_OUTPUT
+          else
+            echo "type=release" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish NeoForge to Modrinth & CurseForge
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+          files: neoforge-artifacts/vouch-neoforge-*.jar
+          name: "Vouch ${{ github.event.release.tag_name }} (NeoForge)"
+          version: "${{ github.event.release.tag_name }}-neoforge"
+          version-type: ${{ steps.version_type.outputs.type }}
+          changelog: ${{ github.event.release.body }}
+          game-versions: ${{ env.MINECRAFT_VERSION }}
+          loaders: neoforge
+          dependencies: |
+            architectury-api | depends
+
+  attach-jars:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Attach JARs to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/fabric-jar/vouch-fabric-*.jar
+            artifacts/neoforge-jar/vouch-neoforge-*.jar

@@ -1,0 +1,81 @@
+Vouch License
+Copyright (c) 2026 NozzDev
+
+1. Definitions
+
+   "Software" refers to the Vouch mod, its source code, compiled binaries,
+   assets, documentation, and any associated files in this repository.
+
+   "Author" refers to NozzDev and any authorized maintainers.
+
+   "Official Distribution Channels" refers to the Author's pages on
+   CurseForge, Modrinth, and GitHub Releases.
+
+2. Permissions
+
+   You MAY:
+
+   a. View, study, and reference the source code for personal,
+      educational, or development purposes.
+
+   b. Fork and modify the source code for the purpose of submitting
+      contributions (pull requests) back to the original repository.
+
+   c. Include the unmodified Software in modpacks, provided the modpack
+      does not charge for access to the Software itself and links back
+      to an Official Distribution Channel for download.
+
+   d. Use the Software on any number of Minecraft servers, including
+      commercial servers, without restriction.
+
+3. Restrictions
+
+   You MAY NOT:
+
+   a. Redistribute, re-upload, or mirror the Software (source or binary)
+      on any platform, website, or file-sharing service outside of the
+      Official Distribution Channels without prior written permission
+      from the Author.
+
+   b. Sell, sublicense, or commercially distribute the Software or any
+      modified version of it.
+
+   c. Create and distribute derivative works based on the Software.
+      Forks for the purpose of contribution are permitted under 2(b).
+
+   d. Remove, alter, or obscure this license, copyright notices, or
+      author attribution from any copy of the Software.
+
+4. Modpacks
+
+   Inclusion in modpacks is permitted under the following conditions:
+
+   a. The Software is not the primary selling point of the modpack.
+   b. The Software is obtained from an Official Distribution Channel.
+   c. Credit is given to the Author with a link to the project page.
+   d. The modpack does not modify the Software's binaries.
+
+5. Contributions
+
+   By submitting a pull request or other contribution to the repository,
+   you agree to license your contribution under the same terms as this
+   license and grant the Author unrestricted rights to use, modify, and
+   distribute your contribution as part of the Software.
+
+6. Disclaimer
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM,
+   DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+7. Termination
+
+   This license is automatically terminated if you violate any of its
+   terms. Upon termination, you must destroy all copies of the Software
+   in your possession.
+
+8. Changes
+
+   The Author reserves the right to change this license for future
+   versions of the Software. Previously released versions remain under
+   the license they were published with.

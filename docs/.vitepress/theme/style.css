@@ -1,0 +1,130 @@
+/**
+ * Vouch — Custom Theme
+ * Brand color: #EEB53D (Amber)
+ */
+
+/* ── Brand Colors (Amber) ── */
+:root {
+  --vp-c-brand-1: #d4a033;
+  --vp-c-brand-2: #EEB53D;
+  --vp-c-brand-3: #d4a033;
+  --vp-c-brand-soft: rgba(238, 181, 61, 0.14);
+
+  --vp-c-default-1: var(--vp-c-gray-1);
+  --vp-c-default-2: var(--vp-c-gray-2);
+  --vp-c-default-3: var(--vp-c-gray-3);
+  --vp-c-default-soft: var(--vp-c-gray-soft);
+
+  --vp-c-tip-1: var(--vp-c-brand-1);
+  --vp-c-tip-2: var(--vp-c-brand-2);
+  --vp-c-tip-3: var(--vp-c-brand-3);
+  --vp-c-tip-soft: var(--vp-c-brand-soft);
+
+  --vp-c-warning-1: var(--vp-c-yellow-1);
+  --vp-c-warning-2: var(--vp-c-yellow-2);
+  --vp-c-warning-3: var(--vp-c-yellow-3);
+  --vp-c-warning-soft: var(--vp-c-yellow-soft);
+
+  --vp-c-danger-1: var(--vp-c-red-1);
+  --vp-c-danger-2: var(--vp-c-red-2);
+  --vp-c-danger-3: var(--vp-c-red-3);
+  --vp-c-danger-soft: var(--vp-c-red-soft);
+}
+
+.dark {
+  --vp-c-brand-1: #EEB53D;
+  --vp-c-brand-2: #f5c45e;
+  --vp-c-brand-3: #EEB53D;
+  --vp-c-brand-soft: rgba(238, 181, 61, 0.16);
+}
+
+/* ── Buttons ── */
+:root {
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-text: #1a1a1a;
+  --vp-button-brand-bg: #EEB53D;
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-hover-text: #1a1a1a;
+  --vp-button-brand-hover-bg: #f5c45e;
+  --vp-button-brand-active-border: transparent;
+  --vp-button-brand-active-text: #1a1a1a;
+  --vp-button-brand-active-bg: #d4a033;
+}
+
+/* ── Home Hero ── */
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    120deg,
+    #EEB53D 30%,
+    #f7d794
+  );
+
+  --vp-home-hero-image-background-image: linear-gradient(
+    -45deg,
+    #EEB53D 50%,
+    #f7d794 50%
+  );
+  --vp-home-hero-image-filter: blur(44px);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --vp-home-hero-image-filter: blur(56px);
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --vp-home-hero-image-filter: blur(68px);
+  }
+}
+
+/* ── Custom Blocks ── */
+:root {
+  --vp-custom-block-tip-border: transparent;
+  --vp-custom-block-tip-text: var(--vp-c-text-1);
+  --vp-custom-block-tip-bg: var(--vp-c-brand-soft);
+  --vp-custom-block-tip-code-bg: var(--vp-c-brand-soft);
+}
+
+/* ── Badge Styles ── */
+.VPBadge.tip {
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+}
+
+/* ── Sidebar active indicator ── */
+.VPSidebarItem.is-active > .item > .indicator {
+  background-color: var(--vp-c-brand-2);
+}
+
+/* ── Home Feature Cards ── */
+.VPFeature {
+  border: 1px solid var(--vp-c-bg-soft) !important;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.VPFeature:hover {
+  border-color: var(--vp-c-brand-2) !important;
+  box-shadow: 0 2px 12px rgba(238, 181, 61, 0.08);
+}
+
+/* ── Custom scrollbar (dark mode) ── */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(238, 181, 61, 0.25);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(238, 181, 61, 0.4);
+}
+
+/* ── Logo glow on hover ── */
+.VPNavBarTitle .logo:hover {
+  filter: drop-shadow(0 0 6px rgba(238, 181, 61, 0.5));
+  transition: filter 0.3s ease;
+}
+
+/* ── Feature icon colors ── */
+.VPFeature .icon {
+  font-size: 1.5rem;
+}
+

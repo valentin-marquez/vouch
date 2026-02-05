@@ -1,0 +1,93 @@
+{
+  "_comment": "Vouch Authentication Mod - English (US) Language File",
+  "_version": "0.1.0",
+  
+  "vouch.auth.welcome.unregistered": "&6Welcome! Please register with: &f/register <password> <password>",
+  "vouch.auth.welcome.registered": "&6Welcome back! Please login with: &f/login <password>",
+  "vouch.auth.welcome.2fa_only.unregistered": "&6Welcome! Please use &f/register &6to set up 2FA",
+  "vouch.auth.welcome.2fa_only.registered": "&6Welcome back! Use: &f/login <code> &6with your authenticator code",
+  
+  "vouch.auth.login.success": "&aLogin successful! Welcome back.",
+  "vouch.auth.login.wrong_password": "&cWrong password!",
+  "vouch.auth.login.too_many_attempts": "&cToo many failed attempts! Please wait before trying again.",
+  "vouch.auth.login.locked_out": "&cAccount locked. Try again in {time} seconds.",
+  
+  "vouch.auth.register.success": "&aRegistration successful! You are now logged in.",
+  "vouch.auth.register.success_2fa": "&aRegistration successful! Scan the QR code to complete setup.",
+  "vouch.auth.register.password_mismatch": "&cPasswords do not match! Try again.",
+  "vouch.auth.register.password_too_short": "&cPassword too short! Minimum {min} characters.",
+  "vouch.auth.register.password_too_long": "&cPassword too long! Maximum {max} characters.",
+  "vouch.auth.register.already_registered": "&cYou are already registered! Use /login instead.",
+  
+  "vouch.auth.not_registered": "&cYou are not registered! Use /register first.",
+  "vouch.auth.already_logged_in": "&eYou are already logged in!",
+  "vouch.auth.timeout": "Authentication timeout. Please reconnect and try again.",
+  "vouch.auth.session_restored": "&aSession restored! Welcome back.",
+  "vouch.auth.session_expired": "&cYour session has expired. Please reconnect.",
+  
+  "vouch.auth.logout.success": "&eYou have been logged out. Session invalidated.",
+  "vouch.auth.logout.kick": "You have been logged out. Please reconnect to authenticate.",
+  
+  "vouch.jail.chat_blocked": "&cYou cannot chat until you authenticate!",
+  "vouch.jail.action_blocked": "&cYou cannot do that until you authenticate!",
+  "vouch.jail.command_blocked": "&cYou can only use authentication commands right now!",
+  "vouch.jail.processing": "&7Processing...",
+  
+  "vouch.2fa.required": "&e2FA is enabled. Use: &f/2fa verify <code>",
+  "vouch.2fa.setup.instructions": "&eScan the QR code with your authenticator app, then use: &f/2fa verify <code>",
+  "vouch.2fa.setup.manual_secret": "&7Manual entry: &b{secret}",
+  "vouch.2fa.setup.failed": "&cFailed to generate QR code. Please try again.",
+  "vouch.2fa.enabled": "&a2FA has been enabled successfully!",
+  "vouch.2fa.disabled": "&e2FA has been disabled.",
+  "vouch.2fa.invalid_code": "&cInvalid 2FA code. Please try again.",
+  "vouch.2fa.already_enabled": "&e2FA is already enabled! Use &f/2fa disable <code>&e to disable it first.",
+  "vouch.2fa.not_enabled": "&e2FA is not enabled. Use &f/2fa setup&e to enable it.",
+  "vouch.2fa.nothing_pending": "&eNo 2FA action pending. Use &f/2fa setup&e to set up 2FA.",
+  "vouch.2fa.status.enabled": "&72FA Status: &aENABLED",
+  "vouch.2fa.status.disabled": "&72FA Status: &cDISABLED &7- Use /2fa setup to enable",
+  "vouch.2fa.must_login_first": "&cYou must be logged in first!",
+  "vouch.2fa.required_for_ops": "&eAs an operator, you must enable 2FA. Use: &f/2fa setup",
+  
+  "vouch.admin.player_unregistered": "&aPlayer &6{player}&a has been unregistered.",
+  "vouch.admin.player_not_found": "&cPlayer &6{player}&c not found or not registered.",
+  "vouch.admin.player_2fa_reset": "&a2FA has been reset for player &6{player}&a.",
+  "vouch.admin.config_reloaded": "&aConfiguration reloaded successfully!",
+  "vouch.admin.lang_exported": "&aLanguage file exported to: &f{path}",
+  "vouch.admin.database_error": "&cA database error occurred. Please check the server logs.",
+  "vouch.admin.no_permission": "&cYou don't have permission to use this command.",
+  
+  "vouch.ui.title.welcome": "&6Authentication Required",
+  "vouch.ui.title.login_success": "&a✓ Welcome Back!",
+  "vouch.ui.title.register_success": "&a✓ Registered!",
+  "vouch.ui.title.wrong_password": "&c✗ Wrong Password",
+  "vouch.ui.title.2fa_success": "&a✓ 2FA Verified!",
+  
+  "vouch.ui.subtitle.unregistered": "&ePlease use &f/register &eto get started",
+  "vouch.ui.subtitle.registered": "&ePlease use &f/login &eto continue",
+  "vouch.ui.subtitle.2fa_only.unregistered": "&ePlease use &f/register &eto set up 2FA",
+  "vouch.ui.subtitle.2fa_only.registered": "&eEnter your 6-digit authenticator code",
+  "vouch.ui.subtitle.login_success": "&7You are now logged in",
+  "vouch.ui.subtitle.register_success": "&7Your account has been created",
+  "vouch.ui.subtitle.wrong_password": "&7Please try again",
+  
+  "vouch.ui.actionbar.pre_auth": "&e⏳ Time remaining: &f{time}s &8| &e/login or /register",
+  "vouch.ui.actionbar.pre_auth_2fa_only": "&e⏳ Time remaining: &f{time}s &8| &e/register or /login <code>",
+  "vouch.ui.actionbar.awaiting_2fa": "&6🔐 Enter your 2FA code: &f/2fa verify <code>",
+  "vouch.ui.actionbar.rate_limited": "&c⏰ Too many attempts. Wait &f{time}s",
+  
+  "vouch.ui.bossbar.text": "&e🔒 Authentication Required - {time}s remaining",
+  "vouch.ui.bossbar.awaiting_2fa": "&6🔐 2FA Verification Required",
+  
+  "vouch.command.usage.register": "&eUsage: &f/register <password> <confirm_password>",
+  "vouch.command.usage.register_2fa": "&eUsage: &f/register &7(generates 2FA QR code)",
+  "vouch.command.usage.login": "&eUsage: &f/login <password>",
+  "vouch.command.usage.login_2fa": "&eUsage: &f/login <2fa_code>",
+  "vouch.command.usage.2fa_verify": "&eUsage: &f/2fa verify <code>",
+  "vouch.command.usage.2fa_disable": "&eUsage: &f/2fa disable <code>",
+  
+  "vouch.command.disabled.2fa": "&cTwo-factor authentication is disabled on this server.",
+  "vouch.command.disabled.password": "&cPassword authentication is disabled on this server.",
+  
+  "vouch.error.internal": "&cAn internal error occurred. Please contact an administrator.",
+  "vouch.error.database": "&cCould not connect to database. Please try again later."
+}

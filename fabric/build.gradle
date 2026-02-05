@@ -1,0 +1,79 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
+
+    modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
+
+    modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
+
+    // Fabric Permissions API - compatibility with LuckPerms, FTB Ranks, etc.
+    modImplementation "maven.modrinth:fabric-permissions-api:0.3.3"
+
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
+
+    def vouchLibs = [
+        "org.bouncycastle:bcprov-jdk18on:${rootProject.bouncycastle_version}",
+        "com.google.zxing:core:${rootProject.zxing_version}",
+        "com.zaxxer:HikariCP:${rootProject.hikaricp_version}",
+        "com.h2database:h2:${rootProject.h2_version}",
+        "com.mysql:mysql-connector-j:${rootProject.mysql_version}",
+        "org.postgresql:postgresql:${rootProject.postgresql_version}",
+        "com.electronwill.night-config:core:${rootProject.nightconfig_version}",
+        "com.electronwill.night-config:toml:${rootProject.nightconfig_version}"
+    ]
+    
+    vouchLibs.each { lib ->
+        shadowBundle lib
+        implementation lib
+        localRuntime lib
+    }
+}
+
+processResources {
+    inputs.property 'version', project.version
+
+    filesMatching('fabric.mod.json') {
+        expand version: inputs.properties.version
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = 'dev-shadow'
+
+    relocate 'org.bouncycastle', 'com.nozz.vouch.libs.bc'
+    relocate 'com.google.zxing', 'com.nozz.vouch.libs.zxing'
+    relocate 'com.zaxxer.hikari', 'com.nozz.vouch.libs.hikari'
+    relocate 'org.h2', 'com.nozz.vouch.libs.h2'
+    relocate 'com.electronwill.nightconfig', 'com.nozz.vouch.libs.nightconfig'
+    relocate 'org.postgresql', 'com.nozz.vouch.libs.postgresql'
+    relocate 'com.mysql', 'com.nozz.vouch.libs.mysql'
+}
+
+remapJar {
+    inputFile.set shadowJar.archiveFile
+}
