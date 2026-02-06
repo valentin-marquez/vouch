@@ -27,27 +27,35 @@ jobs:
       - name: Build version matrix
         id: set-matrix
         run: |
-          # Read primary version properties
-          MC_VERSION=$(grep '^minecraft_version' gradle.properties | cut -d'=' -f2 | tr -d ' ')
-          YARN=$(grep '^yarn_mappings' gradle.properties | cut -d'=' -f2 | tr -d ' ')
-          FABRIC_LOADER=$(grep '^fabric_loader_version' gradle.properties | cut -d'=' -f2 | tr -d ' ')
-          FABRIC_API=$(grep '^fabric_api_version' gradle.properties | cut -d'=' -f2 | tr -d ' ')
-          NEOFORGE=$(grep '^neoforge_version' gradle.properties | cut -d'=' -f2 | tr -d ' ')
-          SUPPORTED=$(grep '^supported_minecraft_versions' gradle.properties | cut -d'=' -f2 | tr -d ' ')
+          # Read primary version properties (use sed to trim spaces)
+          MC_VERSION=$(grep '^minecraft_version' gradle.properties | cut -d'=' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          YARN=$(grep '^yarn_mappings' gradle.properties | cut -d'=' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          FABRIC_LOADER=$(grep '^fabric_loader_version' gradle.properties | cut -d'=' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          FABRIC_API=$(grep '^fabric_api_version' gradle.properties | cut -d'=' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          NEOFORGE=$(grep '^neoforge_version' gradle.properties | cut -d'=' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          SUPPORTED=$(grep '^supported_minecraft_versions' gradle.properties | cut -d'=' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
           
-          # Build primary version object
-          PRIMARY="{\"minecraft_version\":\"$MC_VERSION\",\"yarn_mappings\":\"$YARN\",\"fabric_loader_version\":\"$FABRIC_LOADER\",\"fabric_api_version\":\"$FABRIC_API\",\"neoforge_version\":\"$NEOFORGE\"}"
+          # Build primary version object using jq for proper JSON escaping
+          PRIMARY=$(jq -n -c \
+            --arg mc "$MC_VERSION" \
+            --arg yarn "$YARN" \
+            --arg fl "$FABRIC_LOADER" \
+            --arg fa "$FABRIC_API" \
+            --arg neo "$NEOFORGE" \
+            '{minecraft_version: $mc, yarn_mappings: $yarn, fabric_loader_version: $fl, fabric_api_version: $fa, neoforge_version: $neo}')
           
-          # Check for alt_versions (uncommented line)
-          ALT_LINE=$(grep '^alt_versions' gradle.properties | cut -d'=' -f2- | xargs || echo "")
+          echo "Primary: $PRIMARY"
+          
+          # Check for alt_versions (uncommented line) - use sed instead of xargs to preserve JSON
+          ALT_LINE=$(grep '^alt_versions' gradle.properties | cut -d'=' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' || echo "")
           
           if [ -n "$ALT_LINE" ]; then
+            echo "Alt versions: $ALT_LINE"
             # Parse alt_versions JSON array and merge with primary
-            # alt_versions is a JSON array, we need to combine it with primary
             MATRIX=$(echo "$ALT_LINE" | jq -c --argjson primary "$PRIMARY" '{include: ([$primary] + .)}')
           else
             # Only primary version
-            MATRIX="{\"include\":[$PRIMARY]}"
+            MATRIX=$(jq -n -c --argjson primary "$PRIMARY" '{include: [$primary]}')
           fi
           
           echo "Matrix: $MATRIX"
