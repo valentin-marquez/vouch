@@ -5,9 +5,17 @@
 </div>
 
 ::: info Multi-Version Support
-Vouch supports multiple Minecraft 1.21.x versions. See the [GitHub releases](https://github.com/nozzdev/vouch/releases) for version-specific downloads.
+Vouch supports multiple Minecraft 1.21.x versions. See the [GitHub releases](https://github.com/valentin-marquez/vouch/releases) for version-specific downloads.
 Currently supported: **1.21.1**, **1.21.4** — more coming soon.
 :::
+
+## Download
+
+Vouch is available on multiple platforms:
+
+[![Modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/mod/vouch)
+[![CurseForge](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/curseforge_vector.svg)](https://legacy.curseforge.com/minecraft/mc-mods/vouch)
+[![GitHub Releases](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/github_vector.svg)](https://github.com/valentin-marquez/vouch/releases)
 
 **Vouch** is a secure, server-side authentication mod for Minecraft. It supports both **Fabric** and **NeoForge** through the Architectury API.
 
@@ -27,7 +35,7 @@ Currently supported: **1.21.1**, **1.21.4** — more coming soon.
 
 ## Requirements
 
-- **Minecraft** 1.21.x (see [releases](https://github.com/nozzdev/vouch/releases) for specific versions)
+- **Minecraft** 1.21.x (see [releases](https://github.com/valentin-marquez/vouch/releases) for specific versions)
 - **Java** 21 or higher
 - **Loader**: Fabric or NeoForge
 - **Dependencies**:

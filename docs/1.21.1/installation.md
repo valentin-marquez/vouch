@@ -1,5 +1,21 @@
 # Installation
 
+## Download
+
+Vouch is available on multiple platforms:
+
+[![Modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/mod/vouch)
+[![CurseForge](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/curseforge_vector.svg)](https://legacy.curseforge.com/minecraft/mc-mods/vouch)
+[![GitHub Releases](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/github_vector.svg)](https://github.com/valentin-marquez/vouch/releases)
+
+| Platform | Link |
+|----------|------|
+| **Modrinth** | [modrinth.com/mod/vouch](https://modrinth.com/mod/vouch) |
+| **CurseForge** | [curseforge.com/minecraft/mc-mods/vouch](https://legacy.curseforge.com/minecraft/mc-mods/vouch) |
+| **GitHub Releases** | [github.com/valentin-marquez/vouch/releases](https://github.com/valentin-marquez/vouch/releases) |
+
+---
+
 ## Fabric
 
 ### Dependencies

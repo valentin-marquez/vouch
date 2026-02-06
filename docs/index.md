@@ -14,7 +14,7 @@ hero:
       link: /1.21.1/
     - theme: alt
       text: View on GitHub
-      link: https://github.com/nozzdev/vouch
+      link: https://github.com/valentin-marquez/vouch
     - theme: alt
       text: ☕ Support on Ko-fi
       link: https://ko-fi.com/nozzdev
