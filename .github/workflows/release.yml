@@ -104,6 +104,25 @@ jobs:
           chmod +x ./gradlew
           ./gradlew clean build --no-daemon
 
+      - name: Rename JARs with MC version
+        run: |
+          # Rename Fabric JAR to include MC version
+          for jar in fabric/build/libs/vouch-fabric-*.jar; do
+            if [[ -f "$jar" && ! "$jar" =~ (-dev-shadow|-sources) ]]; then
+              newname=$(echo "$jar" | sed "s/vouch-fabric-/vouch-fabric-mc${{ matrix.minecraft_version }}-/")
+              mv "$jar" "$newname"
+              echo "Renamed: $jar -> $newname"
+            fi
+          done
+          # Rename NeoForge JAR to include MC version
+          for jar in neoforge/build/libs/vouch-neoforge-*.jar; do
+            if [[ -f "$jar" && ! "$jar" =~ (-dev-shadow|-sources) ]]; then
+              newname=$(echo "$jar" | sed "s/vouch-neoforge-/vouch-neoforge-mc${{ matrix.minecraft_version }}-/")
+              mv "$jar" "$newname"
+              echo "Renamed: $jar -> $newname"
+            fi
+          done
+
       - name: Upload Fabric JAR
         uses: actions/upload-artifact@v4
         with:
@@ -140,10 +159,15 @@ jobs:
           name: fabric-jar-${{ matrix.minecraft_version }}
           path: fabric-artifacts
 
-      - name: Determine version type
-        id: version_type
+      - name: Determine version info
+        id: version_info
         run: |
           TAG="${{ github.event.release.tag_name }}"
+          # Extract mod version from tag (e.g., v0.1.0-mc1.21.2 -> 0.1.0)
+          MOD_VERSION=$(echo "$TAG" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "mod_version=$MOD_VERSION" >> $GITHUB_OUTPUT
+          
+          # Determine version type
           if [[ "$TAG" == *"-alpha"* ]]; then
             echo "type=alpha" >> $GITHUB_OUTPUT
           elif [[ "$TAG" == *"-beta"* ]] || [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
@@ -163,8 +187,8 @@ jobs:
 
           files: fabric-artifacts/vouch-fabric-*.jar
           name: "Vouch ${{ github.event.release.tag_name }} (Fabric ${{ matrix.minecraft_version }})"
-          version: "${{ github.event.release.tag_name }}+mc${{ matrix.minecraft_version }}-fabric"
-          version-type: ${{ steps.version_type.outputs.type }}
+          version: "${{ steps.version_info.outputs.mod_version }}+${{ matrix.minecraft_version }}-fabric"
+          version-type: ${{ steps.version_info.outputs.type }}
           changelog: ${{ github.event.release.body }}
           game-versions: ${{ matrix.minecraft_version }}
           loaders: fabric
@@ -188,10 +212,15 @@ jobs:
           name: neoforge-jar-${{ matrix.minecraft_version }}
           path: neoforge-artifacts
 
-      - name: Determine version type
-        id: version_type
+      - name: Determine version info
+        id: version_info
         run: |
           TAG="${{ github.event.release.tag_name }}"
+          # Extract mod version from tag (e.g., v0.1.0-mc1.21.2 -> 0.1.0)
+          MOD_VERSION=$(echo "$TAG" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "mod_version=$MOD_VERSION" >> $GITHUB_OUTPUT
+          
+          # Determine version type
           if [[ "$TAG" == *"-alpha"* ]]; then
             echo "type=alpha" >> $GITHUB_OUTPUT
           elif [[ "$TAG" == *"-beta"* ]] || [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
@@ -211,8 +240,8 @@ jobs:
 
           files: neoforge-artifacts/vouch-neoforge-*.jar
           name: "Vouch ${{ github.event.release.tag_name }} (NeoForge ${{ matrix.minecraft_version }})"
-          version: "${{ github.event.release.tag_name }}+mc${{ matrix.minecraft_version }}-neoforge"
-          version-type: ${{ steps.version_type.outputs.type }}
+          version: "${{ steps.version_info.outputs.mod_version }}+${{ matrix.minecraft_version }}-neoforge"
+          version-type: ${{ steps.version_info.outputs.type }}
           changelog: ${{ github.event.release.body }}
           game-versions: ${{ matrix.minecraft_version }}
           loaders: neoforge
@@ -240,5 +269,6 @@ jobs:
       - name: Attach JARs to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          fail_on_unmatched_files: false
           files: |
             artifacts/**/vouch-*.jar
