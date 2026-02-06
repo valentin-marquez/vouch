@@ -183,19 +183,19 @@ public final class VouchMod {
         InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, direction) -> {
             if (player instanceof ServerPlayerEntity serverPlayer) {
                 if (!authManager.isAuthenticated(serverPlayer)) {
-                    return dev.architectury.event.EventResult.interruptFalse();
+                    return net.minecraft.util.ActionResult.FAIL;
                 }
             }
-            return dev.architectury.event.EventResult.pass();
+            return net.minecraft.util.ActionResult.PASS;
         });
 
         InteractionEvent.LEFT_CLICK_BLOCK.register((player, hand, pos, direction) -> {
             if (player instanceof ServerPlayerEntity serverPlayer) {
                 if (!authManager.isAuthenticated(serverPlayer)) {
-                    return dev.architectury.event.EventResult.interruptFalse();
+                    return net.minecraft.util.ActionResult.FAIL;
                 }
             }
-            return dev.architectury.event.EventResult.pass();
+            return net.minecraft.util.ActionResult.PASS;
         });
 
         InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {

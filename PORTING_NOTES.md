@@ -8,7 +8,7 @@ for Vouch across Minecraft 1.21.x versions.
 | Group | MC Versions      | Branch     | Architectury | NeoForge  | Fabric API          | Yarn Mappings       | Status      |
 |-------|------------------|------------|--------------|-----------|---------------------|---------------------|-------------|
 | A     | 1.21.1           | mc/1.21.1  | 13.0.8       | 21.1.215  | 0.116.8+1.21.1      | 1.21.1+build.1      | ✅ Released  |
-| B     | 1.21.2, 1.21.3   | mc/1.21.2  | 14.x         | 21.2.x    | 0.x+1.21.2          | 1.21.2+build.x      | ⬜ Pending   |
+| B     | 1.21.2, 1.21.3   | mc/1.21.2  | 14.0.4       | 21.2.0-beta | 0.106.1+1.21.2    | 1.21.2+build.1      | ✅ Ported    |
 | C     | 1.21.4           | mc/1.21.4  | 15.0.3       | 21.4.130  | 0.119.4+1.21.4      | 1.21.4+build.1      | ✅ Ported    |
 | D     | 1.21.5           | mc/1.21.5  | 16.x         | 21.5.x    | 0.x+1.21.5          | 1.21.5+build.x      | ⬜ Pending   |
 | E     | 1.21.6–1.21.8    | mc/1.21.6  | 17.x         | 21.6.x    | 0.x+1.21.6          | 1.21.6+build.x      | ⬜ Pending   |
@@ -26,32 +26,38 @@ for Vouch across Minecraft 1.21.x versions.
 
 ## Breaking Changes Per Boundary
 
-### A → B: 1.21.1 → 1.21.2 | Impact: MODERATE
+### A → B: 1.21.1 → 1.21.2 | Impact: MODERATE (ACTUAL)
 
 - **Protocol**: 767 → 768
 - **`ActionResult` refactoring**: MC 1.21.2 restructured `ActionResult` return types. Directly affects
   `PlayerInteractionMixin` which returns `ActionResult.FAIL` from `interactItem()` and `interactBlock()`.
   Verify return type still exists in Yarn mappings.
-- **Action items**:
-  1. Update `gradle.properties`: Yarn, Fabric API, NeoForge, Architectury → v14
-  2. Verify `ActionResult.FAIL` return type on `interactItem`/`interactBlock`
-  3. Re-verify all `@Inject` method descriptors against 1.21.2 Yarn mappings
-
-### B → C: 1.21.2/3 → 1.21.4 | Impact: LOW → MODERATE (ACTUAL)
-
-- **Protocol**: 768 → 769
-- **Damage immunity removed**: 3-second post-spawn damage immunity eliminated.
-  `EntityDamageMixin` becomes more critical (no built-in immunity window).
-- **Architectury API v15 breaking change** (CONFIRMED):
+- **Architectury API v14 breaking change** (CONFIRMED):
   - `InteractionEvent.RIGHT_CLICK_BLOCK` now expects `ActionResult` return type (was `EventResult`)
   - `InteractionEvent.LEFT_CLICK_BLOCK` now expects `ActionResult` return type (was `EventResult`)
   - `InteractionEvent.INTERACT_ENTITY` still uses `EventResult` (unchanged)
   - Fix: Change `EventResult.interruptFalse()` → `ActionResult.FAIL`, `EventResult.pass()` → `ActionResult.PASS`
+- **`ServerPlayerEntity.damage()` signature change** (CONFIRMED):
+  - Method now takes `ServerWorld` as first parameter
+  - Old: `damage(DamageSource, float)`
+  - New: `damage(ServerWorld, DamageSource, float)`
+  - Fix: Update `EntityDamageMixin` to include `ServerWorld world` parameter
+- **Action items**:
+  1. Update `gradle.properties`: Yarn, Fabric API, NeoForge, Architectury → v14
+  2. Update block interaction events: `EventResult` → `ActionResult`
+  3. Update `EntityDamageMixin` to include `ServerWorld` parameter
+  4. Re-verify all `@Inject` method descriptors against 1.21.2 Yarn mappings
+
+### B → C: 1.21.2/3 → 1.21.4 | Impact: LOW (REVISED)
+
+- **Protocol**: 768 → 769
+- **Damage immunity removed**: 3-second post-spawn damage immunity eliminated.
+  `EntityDamageMixin` becomes more critical (no built-in immunity window).
+- **Architectury API v15**: No additional breaking changes for Vouch (EventResult → ActionResult 
+  for block events already happened in v14)
 - **Action items**:
   1. Update dependency versions (Architectury v14 → v15)
-  2. Import `net.minecraft.util.ActionResult`
-  3. Update block interaction event handlers to return `ActionResult` instead of `EventResult`
-  4. Test damage blocking immediately on join
+  2. Test damage blocking immediately on join
 
 ### C → D: 1.21.4 → 1.21.5 | Impact: MODERATE
 
@@ -106,9 +112,9 @@ for Vouch across Minecraft 1.21.x versions.
 | `ServerPlayerEntityMixin`          | `playerTick()` HEAD             | LOW-MED | Yarn name could change                       |
 | `ServerPlayNetworkHandlerMixin`    | `onChatMessage(ChatMessageC2SPacket)` | MEDIUM | Chat packet changed in 1.21.5         |
 | `PlayerInteractionMixin`           | `tryBreakBlock(BlockPos)`       | LOW     | Stable block interaction                     |
-| `PlayerInteractionMixin`           | `interactItem(...)` → `ActionResult` | HIGH | ActionResult refactored in 1.21.2      |
-| `PlayerInteractionMixin`           | `interactBlock(...)` → `ActionResult` | HIGH | Same ActionResult concern              |
-| `EntityDamageMixin`                | `damage(DamageSource, float)`   | MEDIUM  | Verify DamageSource hasn't moved             |
+| `PlayerInteractionMixin`           | `interactItem(...)` → `ActionResult` | LOW  | ActionResult stable across versions          |
+| `PlayerInteractionMixin`           | `interactBlock(...)` → `ActionResult` | LOW | ActionResult stable across versions          |
+| `EntityDamageMixin`                | `damage(ServerWorld, DamageSource, float)` | HIGH | Signature changed in 1.21.2 (added ServerWorld) |
 
 ## Backporting / Forward-Porting Workflow
 
