@@ -3,7 +3,7 @@
   "id": "vouch",
   "version": "${version}",
   "name": "Vouch",
-  "description": "Industrial-grade server-side authentication with Argon2id hashing, TOTP 2FA, and multi-database support.",
+  "description": "Secure server-side authentication with Argon2id hashing, TOTP 2FA, and session persistence.",
   "authors": [
     "com.nozz"
   ],

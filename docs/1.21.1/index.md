@@ -4,13 +4,13 @@
   Current version: <strong>0.1.0</strong> · Minecraft <strong>1.21.1</strong> · Java <strong>21+</strong>
 </div>
 
-**Vouch** is an industrial-grade, server-side authentication mod for Minecraft 1.21.1. It supports both **Fabric** and **NeoForge** through the Architectury API.
+**Vouch** is a secure, server-side authentication mod for Minecraft 1.21.1. It supports both **Fabric** and **NeoForge** through the Architectury API.
 
 ## Key Features
 
 | Feature | Description |
 |---------|-------------|
-| **Argon2id Hashing** | Military-grade password hashing via Bouncy Castle |
+| **Argon2id Hashing** | Secure password hashing via Bouncy Castle |
 | **TOTP 2FA** | RFC 6238 time-based one-time passwords with in-game QR codes |
 | **Multi-Database** | H2, SQLite, MySQL, PostgreSQL with HikariCP pooling |
 | **Async Everything** | Zero TPS impact — crypto and DB run on dedicated thread pools |

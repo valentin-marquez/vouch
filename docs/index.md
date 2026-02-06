@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Vouch
   text: Verify. Authenticate. Play.
-  tagline: Industrial-grade server-side authentication for Minecraft with Argon2id hashing, TOTP 2FA, and multi-database support.
+  tagline: Secure server-side authentication solution featuring Argon2id hashing, 2FA TOTP, and session persistence.
   image:
     src: /icon.png
     alt: Vouch
@@ -22,7 +22,7 @@ hero:
 features:
   - icon: 🔐
     title: Argon2id Hashing
-    details: Military-grade password hashing using Argon2id via Bouncy Castle. Configurable memory cost, iterations, and parallelism.
+    details: Secure password hashing using Argon2id via Bouncy Castle. Configurable memory cost, iterations, and parallelism.
   - icon: 📱
     title: TOTP Two-Factor Auth
     details: RFC 6238 compliant 2FA with QR code rendered as in-game maps. Compatible with Google Authenticator, Authy, and Aegis.

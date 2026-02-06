@@ -9,7 +9,7 @@ version = "${version}"
 displayName = "Vouch"
 authors = "com.nozz"
 description = '''
-Industrial-grade server-side authentication for Minecraft.
+Secure server-side authentication for Minecraft.
 
 Features:
 - Argon2id password hashing (async, no TPS impact)

@@ -1,20 +1,73 @@
-Vouch
+[![Architectury API](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/requires/architectury-api_vector.svg)](https://github.com/architectury/architectury-api)
+[![Fabric](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/supported/fabric_vector.svg)](https://fabricmc.net/) [![NeoForge](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/supported/neoforge_vector.svg)](https://neoforged.net/)
+[![Modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/mod/vouch) [![CurseForge](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/curseforge_vector.svg)](https://legacy.curseforge.com/minecraft/mc-mods/vouch)
 
-[![Modrinth](https://img.shields.io/modrinth/dt/vouch?logo=modrinth&label=Modrinth&color=00AF5C)](https://modrinth.com/mod/vouch)
-[![CurseForge](https://img.shields.io/curseforge/dt/vouch?logo=curseforge&label=CurseForge&color=F16436)](https://www.curseforge.com/minecraft/mc-mods/vouch)
-[![Fabric](https://img.shields.io/badge/Fabric-1.21.1-DBD0B4?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABOSURBVDhPY/hPAWBkYGD4j4cNBDCKEwMYGBgYmBgoBKMaKQSjGikEFGv8T6ZGkBomRkoByBgmShVDjSMTMDIwMPxHE2OiVDHUOBIBAOjWE8cjMFcGAAAAAElFTkSuQmCC)](https://modrinth.com/mod/vouch)
-[![NeoForge](https://img.shields.io/badge/NeoForge-1.21.1-f38120?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABYSURBVDhPY/hPAWBkYGD4j4cNBDCKEwOwMDAwMPz//58ozcgamCgFIGOYKFXMwMDAQK5GkBoGBgaGJ0+e/CfFVpBGJkoV////n+x4BKlhYqAUjGqkEAAAWrcVx7sFjEEAAAAASUVORK5CYII=)](https://modrinth.com/mod/vouch)
+### Vouch
 
-Server-side authentication mod for Minecraft 1.21.1. Works on Fabric and NeoForge.
+Secure server-side authentication solution for Minecraft 1.21.1 featuring Argon2id hashing, 2FA TOTP, and session persistence.
+Works on Fabric and NeoForge — no client mod required.
 
-Players register with a password, log in when they join, and optionally enable TOTP two-factor authentication. The server handles everything. No client mod needed.
+---
 
-Passwords are hashed with Argon2id asynchronously so the main thread is never blocked. TOTP secrets are encrypted at rest. Sessions persist across reconnects so players don't have to re-authenticate every time they rejoin.
+#### How it works
 
-Supports H2 (embedded, default), MySQL, and PostgreSQL. Switch between them in the config file.
+```mermaid
+flowchart TD
+    A[Player joins] --> B{Has session?}
+    B -- Yes --> C[Validate session\nUUID + IP + expiry]
+    C -- Valid --> D[✅ Authenticated]
+    C -- Invalid --> E[Enter pre-auth jail]
+    B -- No --> E
 
-The mod integrates with LuckPerms and other permission systems through the Fabric Permissions API on Fabric and NeoForge's built-in permission system.
+    E --> F{Registered?}
+    F -- No --> G[/register password password]
+    F -- Yes --> H[/login password]
 
-Built with Architectury for cross-platform support from a single codebase.
+    G --> I[Argon2id hash + store]
+    I --> D
 
-License: All Rights Reserved - Source Available (see LICENSE file)
+    H --> J{Password correct?}
+    J -- No --> K[Rate limiter\nProgressive lockout]
+    K --> H
+    J -- Yes --> L{2FA enabled?}
+
+    L -- No --> D
+    L -- Yes --> M[/2fa code]
+    M --> N{TOTP valid?}
+    N -- No --> M
+    N -- Yes --> D
+
+    D --> O[Create session token\nSHA-256 stored in DB]
+    O --> P[🎮 Player can play]
+```
+
+#### Features
+
+| | |
+|---|---|
+| **Auth** | Argon2id hashing · TOTP 2FA with in-game QR codes · Session persistence |
+| **Security** | Rate limiting · Pre-auth isolation · Async crypto (zero TPS impact) |
+| **Storage** | H2 · SQLite · MySQL · PostgreSQL — with HikariCP pooling |
+| **UX** | Titles · BossBar countdown · ActionBar · Configurable sounds |
+| **Platform** | Fabric + NeoForge via Architectury · LuckPerms integration |
+| **i18n** | `en_us`, `es_mx` built-in · Fully customizable |
+
+#### Architecture
+
+```
+common/     Shared code — auth, commands, config, crypto, database, mixins
+fabric/     Fabric entrypoint + Fabric Permissions API
+neoforge/   NeoForge entrypoint + NeoForge PermissionAPI
+```
+
+#### Requirements
+
+- Minecraft 1.21.1 · Java 21+
+- Fabric (≥0.15.11) + Fabric API, or NeoForge (≥21.1)
+- [Architectury API](https://modrinth.com/mod/architectury-api)
+
+---
+
+[![Ko-fi](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/donate/kofi-singular_vector.svg)](https://ko-fi.com/nozzdev)
+
+License: All Rights Reserved — Source Available (see LICENSE file)

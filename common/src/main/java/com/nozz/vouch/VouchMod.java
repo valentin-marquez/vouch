@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Vouch - Server-side authentication mod for Minecraft
  * 
- * Industrial-grade security with Argon2id hashing, TOTP 2FA,
+ * Secure authentication with Argon2id hashing, TOTP 2FA,
  * and multi-database support (H2/SQLite/MySQL/PostgreSQL).
  * 
  * @version 0.1.0 MVP
