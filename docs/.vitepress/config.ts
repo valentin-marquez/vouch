@@ -64,7 +64,7 @@ function sidebarGuide(version: string) {
 }
 
 export default defineConfig({
-  base: '/vouch/',
+  base: '/',
   title: 'Vouch',
   description: 'Industrial-grade server-side authentication for Minecraft.',
   head: [
