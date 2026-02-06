@@ -11,22 +11,75 @@ env:
   JAVA_VERSION: "21"
 
 jobs:
-  build:
+  # =============================================================================
+  # Prepare build matrix from gradle.properties
+  # Reads primary version + alt_versions to create a matrix of all MC versions
+  # =============================================================================
+  prepare-matrix:
     runs-on: ubuntu-latest
     outputs:
-      minecraft_version: ${{ steps.read_props.outputs.minecraft_version }}
-      supported_versions: ${{ steps.read_props.outputs.supported_versions }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      supported_versions: ${{ steps.set-matrix.outputs.supported_versions }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Read version properties
-        id: read_props
+      - name: Build version matrix
+        id: set-matrix
         run: |
+          # Read primary version properties
           MC_VERSION=$(grep '^minecraft_version' gradle.properties | cut -d'=' -f2 | tr -d ' ')
+          YARN=$(grep '^yarn_mappings' gradle.properties | cut -d'=' -f2 | tr -d ' ')
+          FABRIC_LOADER=$(grep '^fabric_loader_version' gradle.properties | cut -d'=' -f2 | tr -d ' ')
+          FABRIC_API=$(grep '^fabric_api_version' gradle.properties | cut -d'=' -f2 | tr -d ' ')
+          NEOFORGE=$(grep '^neoforge_version' gradle.properties | cut -d'=' -f2 | tr -d ' ')
           SUPPORTED=$(grep '^supported_minecraft_versions' gradle.properties | cut -d'=' -f2 | tr -d ' ')
-          echo "minecraft_version=$MC_VERSION" >> $GITHUB_OUTPUT
+          
+          # Build primary version object
+          PRIMARY="{\"minecraft_version\":\"$MC_VERSION\",\"yarn_mappings\":\"$YARN\",\"fabric_loader_version\":\"$FABRIC_LOADER\",\"fabric_api_version\":\"$FABRIC_API\",\"neoforge_version\":\"$NEOFORGE\"}"
+          
+          # Check for alt_versions (uncommented line)
+          ALT_LINE=$(grep '^alt_versions' gradle.properties | cut -d'=' -f2- | xargs || echo "")
+          
+          if [ -n "$ALT_LINE" ]; then
+            # Parse alt_versions JSON array and merge with primary
+            # alt_versions is a JSON array, we need to combine it with primary
+            MATRIX=$(echo "$ALT_LINE" | jq -c --argjson primary "$PRIMARY" '{include: ([$primary] + .)}')
+          else
+            # Only primary version
+            MATRIX="{\"include\":[$PRIMARY]}"
+          fi
+          
+          echo "Matrix: $MATRIX"
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           echo "supported_versions=$SUPPORTED" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # Build for each Minecraft version in the matrix
+  # =============================================================================
+  build:
+    needs: prepare-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply version overrides for MC ${{ matrix.minecraft_version }}
+        run: |
+          echo "Building for Minecraft ${{ matrix.minecraft_version }}"
+          
+          # Override gradle.properties with matrix values
+          sed -i "s/^minecraft_version = .*/minecraft_version = ${{ matrix.minecraft_version }}/" gradle.properties
+          sed -i "s/^yarn_mappings = .*/yarn_mappings = ${{ matrix.yarn_mappings }}/" gradle.properties
+          sed -i "s/^fabric_loader_version = .*/fabric_loader_version = ${{ matrix.fabric_loader_version }}/" gradle.properties
+          sed -i "s/^fabric_api_version = .*/fabric_api_version = ${{ matrix.fabric_api_version }}/" gradle.properties
+          sed -i "s/^neoforge_version = .*/neoforge_version = ${{ matrix.neoforge_version }}/" gradle.properties
+          
+          echo "=== Updated gradle.properties ==="
+          grep -E '^(minecraft_version|yarn_mappings|fabric_loader_version|fabric_api_version|neoforge_version)' gradle.properties
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -45,7 +98,7 @@ jobs:
       - name: Upload Fabric JAR
         uses: actions/upload-artifact@v4
         with:
-          name: fabric-jar
+          name: fabric-jar-${{ matrix.minecraft_version }}
           path: |
             fabric/build/libs/vouch-fabric-*.jar
             !fabric/build/libs/*-dev-shadow.jar
@@ -55,21 +108,27 @@ jobs:
       - name: Upload NeoForge JAR
         uses: actions/upload-artifact@v4
         with:
-          name: neoforge-jar
+          name: neoforge-jar-${{ matrix.minecraft_version }}
           path: |
             neoforge/build/libs/vouch-neoforge-*.jar
             !neoforge/build/libs/*-dev-shadow.jar
             !neoforge/build/libs/*-sources.jar
           if-no-files-found: error
 
+  # =============================================================================
+  # Publish Fabric builds to Modrinth & CurseForge
+  # =============================================================================
   publish-fabric:
-    needs: build
+    needs: [prepare-matrix, build]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
     steps:
-      - name: Download Fabric JAR
+      - name: Download Fabric JAR for MC ${{ matrix.minecraft_version }}
         uses: actions/download-artifact@v4
         with:
-          name: fabric-jar
+          name: fabric-jar-${{ matrix.minecraft_version }}
           path: fabric-artifacts
 
       - name: Determine version type
@@ -84,7 +143,7 @@ jobs:
             echo "type=release" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish Fabric to Modrinth & CurseForge
+      - name: Publish Fabric to Modrinth & CurseForge (MC ${{ matrix.minecraft_version }})
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
@@ -94,24 +153,30 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           files: fabric-artifacts/vouch-fabric-*.jar
-          name: "Vouch ${{ github.event.release.tag_name }} (Fabric)"
-          version: ${{ github.event.release.tag_name }}
+          name: "Vouch ${{ github.event.release.tag_name }} (Fabric ${{ matrix.minecraft_version }})"
+          version: "${{ github.event.release.tag_name }}+mc${{ matrix.minecraft_version }}-fabric"
           version-type: ${{ steps.version_type.outputs.type }}
           changelog: ${{ github.event.release.body }}
-          game-versions: ${{ needs.build.outputs.supported_versions }}
+          game-versions: ${{ matrix.minecraft_version }}
           loaders: fabric
           dependencies: |
             fabric-api | depends
             architectury-api | depends
 
+  # =============================================================================
+  # Publish NeoForge builds to Modrinth & CurseForge
+  # =============================================================================
   publish-neoforge:
-    needs: build
+    needs: [prepare-matrix, build]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
     steps:
-      - name: Download NeoForge JAR
+      - name: Download NeoForge JAR for MC ${{ matrix.minecraft_version }}
         uses: actions/download-artifact@v4
         with:
-          name: neoforge-jar
+          name: neoforge-jar-${{ matrix.minecraft_version }}
           path: neoforge-artifacts
 
       - name: Determine version type
@@ -126,7 +191,7 @@ jobs:
             echo "type=release" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish NeoForge to Modrinth & CurseForge
+      - name: Publish NeoForge to Modrinth & CurseForge (MC ${{ matrix.minecraft_version }})
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
@@ -136,17 +201,20 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           files: neoforge-artifacts/vouch-neoforge-*.jar
-          name: "Vouch ${{ github.event.release.tag_name }} (NeoForge)"
-          version: "${{ github.event.release.tag_name }}-neoforge"
+          name: "Vouch ${{ github.event.release.tag_name }} (NeoForge ${{ matrix.minecraft_version }})"
+          version: "${{ github.event.release.tag_name }}+mc${{ matrix.minecraft_version }}-neoforge"
           version-type: ${{ steps.version_type.outputs.type }}
           changelog: ${{ github.event.release.body }}
-          game-versions: ${{ needs.build.outputs.supported_versions }}
+          game-versions: ${{ matrix.minecraft_version }}
           loaders: neoforge
           dependencies: |
             architectury-api | depends
 
+  # =============================================================================
+  # Attach all built JARs to the GitHub Release
+  # =============================================================================
   attach-jars:
-    needs: build
+    needs: [prepare-matrix, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -155,10 +223,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: "*-jar-*"
+
+      - name: List artifacts
+        run: find artifacts -name "*.jar" -type f
 
       - name: Attach JARs to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/fabric-jar/vouch-fabric-*.jar
-            artifacts/neoforge-jar/vouch-neoforge-*.jar
+            artifacts/**/vouch-*.jar
