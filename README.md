@@ -13,7 +13,7 @@ Works on Fabric and NeoForge — no client mod required.
 |------------------|------------|---------------|
 | 1.21.1           | mc/1.21.1  | ✅ Released    |
 | 1.21.2 – 1.21.3 | mc/1.21.2  | ⬜ Planned     |
-| 1.21.4           | mc/1.21.4  | ⬜ Planned     |
+| 1.21.4           | mc/1.21.4  | ✅ Ported      |
 | 1.21.5           | mc/1.21.5  | ⬜ Planned     |
 | 1.21.6 – 1.21.8 | mc/1.21.6  | ⬜ Planned     |
 | 1.21.9 – 1.21.10| mc/1.21.9  | ⬜ Planned     |

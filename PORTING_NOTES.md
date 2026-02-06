@@ -9,7 +9,7 @@ for Vouch across Minecraft 1.21.x versions.
 |-------|------------------|------------|--------------|-----------|---------------------|---------------------|-------------|
 | A     | 1.21.1           | mc/1.21.1  | 13.0.8       | 21.1.215  | 0.116.8+1.21.1      | 1.21.1+build.1      | ✅ Released  |
 | B     | 1.21.2, 1.21.3   | mc/1.21.2  | 14.x         | 21.2.x    | 0.x+1.21.2          | 1.21.2+build.x      | ⬜ Pending   |
-| C     | 1.21.4           | mc/1.21.4  | 15.x         | 21.4.x    | 0.x+1.21.4          | 1.21.4+build.x      | ⬜ Pending   |
+| C     | 1.21.4           | mc/1.21.4  | 15.0.3       | 21.4.130  | 0.119.4+1.21.4      | 1.21.4+build.1      | ✅ Ported    |
 | D     | 1.21.5           | mc/1.21.5  | 16.x         | 21.5.x    | 0.x+1.21.5          | 1.21.5+build.x      | ⬜ Pending   |
 | E     | 1.21.6–1.21.8    | mc/1.21.6  | 17.x         | 21.6.x    | 0.x+1.21.6          | 1.21.6+build.x      | ⬜ Pending   |
 | F     | 1.21.9, 1.21.10  | mc/1.21.9  | 18.x         | 21.9.x    | 0.x+1.21.9          | 1.21.9+build.x      | ⬜ Pending   |
@@ -37,14 +37,21 @@ for Vouch across Minecraft 1.21.x versions.
   2. Verify `ActionResult.FAIL` return type on `interactItem`/`interactBlock`
   3. Re-verify all `@Inject` method descriptors against 1.21.2 Yarn mappings
 
-### B → C: 1.21.2/3 → 1.21.4 | Impact: LOW
+### B → C: 1.21.2/3 → 1.21.4 | Impact: LOW → MODERATE (ACTUAL)
 
 - **Protocol**: 768 → 769
 - **Damage immunity removed**: 3-second post-spawn damage immunity eliminated.
   `EntityDamageMixin` becomes more critical (no built-in immunity window).
+- **Architectury API v15 breaking change** (CONFIRMED):
+  - `InteractionEvent.RIGHT_CLICK_BLOCK` now expects `ActionResult` return type (was `EventResult`)
+  - `InteractionEvent.LEFT_CLICK_BLOCK` now expects `ActionResult` return type (was `EventResult`)
+  - `InteractionEvent.INTERACT_ENTITY` still uses `EventResult` (unchanged)
+  - Fix: Change `EventResult.interruptFalse()` → `ActionResult.FAIL`, `EventResult.pass()` → `ActionResult.PASS`
 - **Action items**:
   1. Update dependency versions (Architectury v14 → v15)
-  2. Test damage blocking immediately on join
+  2. Import `net.minecraft.util.ActionResult`
+  3. Update block interaction event handlers to return `ActionResult` instead of `EventResult`
+  4. Test damage blocking immediately on join
 
 ### C → D: 1.21.4 → 1.21.5 | Impact: MODERATE
 
