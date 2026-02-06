@@ -4,8 +4,22 @@
 
 ### Vouch
 
-Secure server-side authentication solution for Minecraft 1.21.1 featuring Argon2id hashing, 2FA TOTP, and session persistence.
+Secure server-side authentication solution for Minecraft featuring Argon2id hashing, 2FA TOTP, and session persistence.
 Works on Fabric and NeoForge — no client mod required.
+
+#### Supported Versions
+
+| Minecraft        | Branch     | Status        |
+|------------------|------------|---------------|
+| 1.21.1           | mc/1.21.1  | ✅ Released    |
+| 1.21.2 – 1.21.3 | mc/1.21.2  | ⬜ Planned     |
+| 1.21.4           | mc/1.21.4  | ⬜ Planned     |
+| 1.21.5           | mc/1.21.5  | ⬜ Planned     |
+| 1.21.6 – 1.21.8 | mc/1.21.6  | ⬜ Planned     |
+| 1.21.9 – 1.21.10| mc/1.21.9  | ⬜ Planned     |
+| 1.21.11          | mc/1.21.11 | ⬜ Planned     |
+
+See [PORTING_NOTES.md](PORTING_NOTES.md) for detailed version compatibility information.
 
 ---
 
@@ -62,7 +76,7 @@ neoforge/   NeoForge entrypoint + NeoForge PermissionAPI
 
 #### Requirements
 
-- Minecraft 1.21.1 · Java 21+
+- Minecraft 1.21.x · Java 21+
 - Fabric (≥0.15.11) + Fabric API, or NeoForge (≥21.1)
 - [Architectury API](https://modrinth.com/mod/architectury-api)
 
