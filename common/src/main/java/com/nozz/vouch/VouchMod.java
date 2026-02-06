@@ -17,6 +17,7 @@ import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.ActionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,19 +184,19 @@ public final class VouchMod {
         InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, direction) -> {
             if (player instanceof ServerPlayerEntity serverPlayer) {
                 if (!authManager.isAuthenticated(serverPlayer)) {
-                    return dev.architectury.event.EventResult.interruptFalse();
+                    return ActionResult.FAIL;
                 }
             }
-            return dev.architectury.event.EventResult.pass();
+            return ActionResult.PASS;
         });
 
         InteractionEvent.LEFT_CLICK_BLOCK.register((player, hand, pos, direction) -> {
             if (player instanceof ServerPlayerEntity serverPlayer) {
                 if (!authManager.isAuthenticated(serverPlayer)) {
-                    return dev.architectury.event.EventResult.interruptFalse();
+                    return ActionResult.FAIL;
                 }
             }
-            return dev.architectury.event.EventResult.pass();
+            return ActionResult.PASS;
         });
 
         InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
