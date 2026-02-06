@@ -10,7 +10,7 @@ Frequently asked questions about Vouch.
 
 ### Which Minecraft versions are supported?
 
-Vouch supports **Minecraft 1.21.1** with this version. Other supported versions include 1.21.2-1.21.3 and 1.21.4 — see the version selector in the documentation.
+Vouch supports **Minecraft 1.21.4** with this version. Other supported versions include 1.21.1 and 1.21.2-1.21.3 — see the version selector in the documentation.
 
 ### Does Vouch support Fabric and NeoForge?
 

@@ -1,7 +1,7 @@
-# Vouch — Minecraft 1.21.1
+# Vouch — Minecraft 1.21.2-1.21.3
 
 <div class="tip custom-block" style="padding-top: 8px">
-  Current version: <strong>0.1.0</strong> · Minecraft <strong>1.21.1</strong> · Java <strong>21+</strong>
+  Current version: <strong>0.1.0</strong> · Minecraft <strong>1.21.2-1.21.3</strong> · Java <strong>21+</strong>
 </div>
 
 ::: info Multi-Version Support
@@ -35,7 +35,7 @@ Vouch is available on multiple platforms:
 
 ## Requirements
 
-- **Minecraft** 1.21.1
+- **Minecraft** 1.21.2 or 1.21.3
 - **Java** 21 or higher
 - **Loader**: Fabric or NeoForge
 - **Dependencies**:

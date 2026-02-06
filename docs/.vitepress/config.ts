@@ -81,14 +81,14 @@ export default defineConfig({
       { text: 'Home', link: '/' },
       {
         text: 'Docs',
-        link: '/1.21.1/',
+        link: '/1.21.4/',
       },
       {
-        text: '1.21.1',
+        text: '1.21.4',
         items: [
+          { text: '1.21.4', link: '/1.21.4/' },
+          { text: '1.21.2-1.21.3', link: '/1.21.2/' },
           { text: '1.21.1', link: '/1.21.1/' },
-          // Future versions will be added here
-          // { text: '1.26.1', link: '/1.26.1/' },
         ]
       },
       { text: 'Changelog', link: '/changelog' },
@@ -97,8 +97,8 @@ export default defineConfig({
 
     sidebar: {
       '/1.21.1/': sidebarGuide('1.21.1'),
-      // Future versions:
-      // '/1.26.1/': sidebarGuide('1.26.1'),
+      '/1.21.2/': sidebarGuide('1.21.2'),
+      '/1.21.4/': sidebarGuide('1.21.4'),
     },
 
     socialLinks: [
