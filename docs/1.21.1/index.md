@@ -1,10 +1,15 @@
-# Vouch — Minecraft 1.21.1
+# Vouch — Minecraft 1.21.x
 
 <div class="tip custom-block" style="padding-top: 8px">
-  Current version: <strong>0.1.0</strong> · Minecraft <strong>1.21.1</strong> · Java <strong>21+</strong>
+  Current version: <strong>0.1.0</strong> · Minecraft <strong>1.21.x</strong> · Java <strong>21+</strong>
 </div>
 
-**Vouch** is a secure, server-side authentication mod for Minecraft 1.21.1. It supports both **Fabric** and **NeoForge** through the Architectury API.
+::: info Multi-Version Support
+Vouch supports multiple Minecraft 1.21.x versions. See the [GitHub releases](https://github.com/nozzdev/vouch/releases) for version-specific downloads.
+Currently supported: **1.21.1**, **1.21.4** — more coming soon.
+:::
+
+**Vouch** is a secure, server-side authentication mod for Minecraft. It supports both **Fabric** and **NeoForge** through the Architectury API.
 
 ## Key Features
 
@@ -22,9 +27,9 @@
 
 ## Requirements
 
-- **Minecraft** 1.21.1
+- **Minecraft** 1.21.x (see [releases](https://github.com/nozzdev/vouch/releases) for specific versions)
 - **Java** 21 or higher
-- **Loader**: Fabric (≥0.15.11) or NeoForge (≥21.1)
+- **Loader**: Fabric or NeoForge
 - **Dependencies**:
   - Fabric: [Fabric API](https://modrinth.com/mod/fabric-api) + [Architectury API](https://modrinth.com/mod/architectury-api)
   - NeoForge: [Architectury API](https://modrinth.com/mod/architectury-api)
