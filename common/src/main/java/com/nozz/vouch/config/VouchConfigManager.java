@@ -442,11 +442,18 @@ public final class VouchConfigManager {
 
     private String resolveString(String path, String defaultValue) {
         String value = config.getOrElse(path, defaultValue);
-        return EnvResolver.resolve(path.replace(".", "_"), value);
+        // Pass the original path with dots - EnvResolver.keyToEnvName handles the conversion
+        return EnvResolver.resolve(path, value);
     }
 
     private int resolveInt(String path, int defaultValue) {
         try {
+            // First check for environment variable override
+            String envResolved = EnvResolver.resolve(path, null);
+            if (envResolved != null) {
+                return Integer.parseInt(envResolved);
+            }
+            
             Object value = config.get(path);
             if (value == null) return defaultValue;
             if (value instanceof Number num) return num.intValue();
@@ -458,6 +465,12 @@ public final class VouchConfigManager {
 
     private boolean resolveBool(String path, boolean defaultValue) {
         try {
+            // First check for environment variable override
+            String envResolved = EnvResolver.resolve(path, null);
+            if (envResolved != null) {
+                return Boolean.parseBoolean(envResolved);
+            }
+            
             Object value = config.get(path);
             if (value == null) return defaultValue;
             if (value instanceof Boolean bool) return bool;
@@ -469,6 +482,12 @@ public final class VouchConfigManager {
 
     private float resolveFloat(String path, float defaultValue) {
         try {
+            // First check for environment variable override
+            String envResolved = EnvResolver.resolve(path, null);
+            if (envResolved != null) {
+                return Float.parseFloat(envResolved);
+            }
+            
             Object value = config.get(path);
             if (value == null) return defaultValue;
             if (value instanceof Number num) return num.floatValue();
@@ -577,7 +596,7 @@ public final class VouchConfigManager {
         return switch (databaseType.toLowerCase()) {
             case "mysql" -> String.format("jdbc:mysql://%s:%d/%s?useSSL=false&allowPublicKeyRetrieval=true",
                     databaseHost, databasePort, databaseName);
-            case "postgresql", "postgres" -> String.format("jdbc:postgresql://%s:%d/%s?sslmode=require",
+            case "postgresql", "postgres" -> String.format("jdbc:postgresql://%s:%d/%s?sslmode=require&channel_binding=disable",
                     databaseHost, databasePort, databaseName);
             case "sqlite" -> String.format("jdbc:sqlite:%s/vouch.db", dataDir);
             default -> String.format("jdbc:h2:%s/vouch;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE", dataDir);
