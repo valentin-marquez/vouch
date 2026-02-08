@@ -291,7 +291,11 @@ public final class PreAuthManager {
 
         PlayerSession session = AuthManager.getInstance().getSession(uuid);
         if (session != null) {
-            player.getAbilities().allowFlying = session.getOriginalAllowFlight();
+            if (isSurvivalOrAdventure(player)) {
+                 player.getAbilities().allowFlying = false;
+            } else {
+                 player.getAbilities().allowFlying = session.getOriginalAllowFlight();
+            }
             player.sendAbilitiesUpdate();
         }
 
@@ -300,6 +304,12 @@ public final class PreAuthManager {
         }
 
         UXManager.getInstance().clearTitle(player);
+    }
+
+    private boolean isSurvivalOrAdventure(ServerPlayerEntity player) {
+        if (player.interactionManager == null) return true;
+        var gameMode = player.interactionManager.getGameMode();
+        return gameMode == net.minecraft.world.GameMode.SURVIVAL || gameMode == net.minecraft.world.GameMode.ADVENTURE;
     }
 
     /**
