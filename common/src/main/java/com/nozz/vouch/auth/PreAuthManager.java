@@ -291,7 +291,14 @@ public final class PreAuthManager {
 
         PlayerSession session = AuthManager.getInstance().getSession(uuid);
         if (session != null) {
-            player.getAbilities().allowFlying = session.getOriginalAllowFlight();
+            // Fix flight bug: reset flying state to prevent players from remaining airborne
+            // after authentication if they pressed space while in jail
+            if (isSurvivalOrAdventure(player)) {
+                player.getAbilities().flying = false;
+                player.getAbilities().allowFlying = false;
+            } else {
+                player.getAbilities().allowFlying = session.getOriginalAllowFlight();
+            }
             player.sendAbilitiesUpdate();
         }
 
@@ -300,6 +307,16 @@ public final class PreAuthManager {
         }
 
         UXManager.getInstance().clearTitle(player);
+    }
+
+    /**
+     * Check if player is in survival or adventure mode (no natural flight ability)
+     */
+    private boolean isSurvivalOrAdventure(ServerPlayerEntity player) {
+        if (player.interactionManager == null) return true;
+        var gameMode = player.interactionManager.getGameMode();
+        return gameMode == net.minecraft.world.GameMode.SURVIVAL 
+            || gameMode == net.minecraft.world.GameMode.ADVENTURE;
     }
 
     /**
