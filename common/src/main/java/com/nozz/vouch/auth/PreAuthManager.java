@@ -293,11 +293,6 @@ public final class PreAuthManager {
         if (session != null) {
             player.getAbilities().allowFlying = session.getOriginalAllowFlight();
             player.sendAbilitiesUpdate();
-        } else {
-            // Defensive: if no session object is available (unexpected), ensure flight is disabled
-            player.getAbilities().allowFlying = false;
-            player.sendAbilitiesUpdate();
-            LOGGER.warn("endPreAuth called but no session found for {} - resetting flight state", player.getName().getString());
         }
 
         if (config.hideFromTabList()) {

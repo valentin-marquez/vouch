@@ -108,43 +108,14 @@ public final class AuthManager {
     /**
      * Authenticate a player directly (for session restoration).
      * Used when a valid persistent session is found.
-     *
-     * Reuses a pending session when available to preserve original state
-     * (e.g., originalAllowFlight, jail position). Ensures pre-auth effects
-     * are cleared immediately.
      */
     public void authenticateFromSession(ServerPlayerEntity player) {
         UUID uuid = player.getUuid();
         String ip = getPlayerIP(player);
 
-        // Prefer reusing a pending session so original state (allowFlying, etc.) is preserved
-        PlayerSession pending = pendingSessions.remove(uuid);
-        if (pending != null) {
-            pending.markAuthenticated();
-            activeSessions.put(uuid, pending);
-
-            // End any pre-auth UX/effects immediately
-            PreAuthManager.getInstance().endPreAuth(player);
-
-            if (VouchConfigManager.getInstance().isSessionPersistenceEnabled()) {
-                createPersistentSession(uuid, ip);
-            }
-
-            LOGGER.info("Player {} authenticated via restored pending session", player.getName().getString());
-            return;
-        }
-
-        // No pending session - create a new active session and defensively end pre-auth effects
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         session.markAuthenticated();
         activeSessions.put(uuid, session);
-
-        // Ensure any lingering pre-auth state is cleared even if we didn't have a pending session object
-        PreAuthManager.getInstance().endPreAuth(player);
-
-        if (VouchConfigManager.getInstance().isSessionPersistenceEnabled()) {
-            createPersistentSession(uuid, ip);
-        }
 
         LOGGER.info("Player {} authenticated via persistent session", player.getName().getString());
     }
