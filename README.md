@@ -12,14 +12,13 @@ Works on Fabric and NeoForge — no client mod required.
 | Minecraft        | Branch     | Status        |
 |------------------|------------|---------------|
 | 1.21.1           | mc/1.21.1  | ✅ Released    |
-| 1.21.2 – 1.21.3 | mc/1.21.2  | ⬜ Planned     |
-| 1.21.4           | mc/1.21.4  | ✅ Ported      |
+| 1.21.2 – 1.21.3 | mc/1.21.2  | ✅ Released     |
+| 1.21.4           | mc/1.21.4  | ✅ Released      |
 | 1.21.5           | mc/1.21.5  | ⬜ Planned     |
 | 1.21.6 – 1.21.8 | mc/1.21.6  | ⬜ Planned     |
 | 1.21.9 – 1.21.10| mc/1.21.9  | ⬜ Planned     |
 | 1.21.11          | mc/1.21.11 | ⬜ Planned     |
 
-See [PORTING_NOTES.md](PORTING_NOTES.md) for detailed version compatibility information.
 
 ---
 
@@ -34,8 +33,8 @@ flowchart TD
     B -- No --> E
 
     E --> F{Registered?}
-    F -- No --> G[/register password password]
-    F -- Yes --> H[/login password]
+    F -- No --> G["/register password password"]
+    F -- Yes --> H["/login password"]
 
     G --> I[Argon2id hash + store]
     I --> D
@@ -46,7 +45,7 @@ flowchart TD
     J -- Yes --> L{2FA enabled?}
 
     L -- No --> D
-    L -- Yes --> M[/2fa code]
+    L -- Yes --> M["/2fa code"]
     M --> N{TOTP valid?}
     N -- No --> M
     N -- Yes --> D
