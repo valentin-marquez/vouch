@@ -30,7 +30,8 @@ dependencies {
     modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
 
     // Fabric Permissions API - compatibility with LuckPerms, FTB Ranks, etc.
-    modImplementation "maven.modrinth:fabric-permissions-api:0.3.3"
+    // Updated to v0.4.0 for Minecraft 1.21.6 compatibility
+    modImplementation "maven.modrinth:fabric-permissions-api:0.4.0"
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
