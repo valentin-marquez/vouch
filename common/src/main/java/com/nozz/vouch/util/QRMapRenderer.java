@@ -165,7 +165,7 @@ public final class QRMapRenderer {
 
         sendPacket(player, mapPacket);
 
-        int selectedSlot = player.getInventory().selectedSlot;
+        int selectedSlot = player.getInventory().getSelectedSlot();
         ItemStack originalItem = player.getMainHandStack();
    
         if (!savedSlots.containsKey(uuid)) {
