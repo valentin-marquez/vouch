@@ -291,10 +291,13 @@ public final class PreAuthManager {
 
         PlayerSession session = AuthManager.getInstance().getSession(uuid);
         if (session != null) {
+            // Fix flight bug: reset flying state to prevent players from remaining airborne
+            // after authentication if they pressed space while in jail
             if (isSurvivalOrAdventure(player)) {
-                 player.getAbilities().allowFlying = false;
+                player.getAbilities().flying = false;
+                player.getAbilities().allowFlying = false;
             } else {
-                 player.getAbilities().allowFlying = session.getOriginalAllowFlight();
+                player.getAbilities().allowFlying = session.getOriginalAllowFlight();
             }
             player.sendAbilitiesUpdate();
         }
