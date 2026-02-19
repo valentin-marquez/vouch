@@ -24,7 +24,6 @@ cd vouch
 common/     # Shared code (Architectury) — most changes go here
 fabric/     # Fabric-specific entrypoint and implementations
 neoforge/   # NeoForge-specific entrypoint and implementations
-docs/       # VitePress documentation (this site)
 ```
 
 ### Running a Test Server
@@ -95,23 +94,6 @@ Adding a new language is one of the easiest ways to contribute:
 
 ---
 
-## Documentation
-
-The documentation site uses [VitePress](https://vitepress.dev/) and lives in the `docs/` directory.
-
-### Running Locally
-
-```bash
-bun run docs:dev
-# or
-npx vitepress dev docs
-```
-
-### Building
-
-```bash
-bun run docs:build
-```
 
 ---
 

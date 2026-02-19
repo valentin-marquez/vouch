@@ -47,7 +47,6 @@ On Fabric, Vouch uses the [Fabric Permissions API](https://github.com/lucko/fabr
 
 This is compatible with:
 - [LuckPerms](https://luckperms.net/) (recommended)
-- [FTB Ranks](https://www.curseforge.com/minecraft/mc-mods/ftb-ranks-forge)
 - Any mod implementing the Fabric Permissions API
 
 ### Example: LuckPerms Setup

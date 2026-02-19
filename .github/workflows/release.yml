@@ -84,14 +84,11 @@ jobs:
             echo "type=release" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish Fabric to Modrinth & CurseForge
+      - name: Publish Fabric to Modrinth
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-
-          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           files: fabric-artifacts/vouch-fabric-*.jar
           name: "Vouch ${{ github.event.release.tag_name }} (Fabric)"
@@ -126,14 +123,11 @@ jobs:
             echo "type=release" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish NeoForge to Modrinth & CurseForge
+      - name: Publish NeoForge to Modrinth
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-
-          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           files: neoforge-artifacts/vouch-neoforge-*.jar
           name: "Vouch ${{ github.event.release.tag_name }} (NeoForge)"
