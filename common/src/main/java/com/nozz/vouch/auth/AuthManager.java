@@ -121,6 +121,47 @@ public final class AuthManager {
     }
 
     /**
+     * Authenticate a player directly as a verified premium account.
+     * Creates a persistent session if enabled.
+     */
+    public void authenticateAsPremium(ServerPlayerEntity player) {
+        UUID uuid = player.getUuid();
+        String ip = getPlayerIP(player);
+
+        PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
+        session.setPremiumVerified(true);
+        session.markAuthenticated();
+        activeSessions.put(uuid, session);
+
+        if (VouchConfigManager.getInstance().isSessionPersistenceEnabled()) {
+            createPersistentSession(uuid, ip);
+        }
+
+        LOGGER.info("Player {} authenticated via premium auto-login", player.getName().getString());
+    }
+
+    /**
+     * Put a premium-verified player in pre-auth jail ONLY for 2FA verification.
+     * Password check is bypassed; only 2FA code is required.
+     */
+    public void addPendingPremiumFor2FA(ServerPlayerEntity player) {
+        UUID uuid = player.getUuid();
+        activeSessions.remove(uuid);
+
+        String ip = getPlayerIP(player);
+        PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
+        session.setPremiumVerified(true);
+        session.setAwaiting2FA(true);
+        session.setOriginalAllowFlight(player.getAbilities().allowFlying);
+
+        pendingSessions.put(uuid, session);
+
+        PreAuthManager.getInstance().startPreAuthPremium2FA(player, session);
+
+        LOGGER.debug("Premium player {} added to pre-auth jail for 2FA verification", player.getName().getString());
+    }
+
+    /**
      * Create a persistent session in the database
      */
     private void createPersistentSession(UUID uuid, String ip) {

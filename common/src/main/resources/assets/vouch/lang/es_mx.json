@@ -25,6 +25,9 @@
   "vouch.auth.session_restored": "&a¡Sesión restaurada! Bienvenido de nuevo.",
   "vouch.auth.session_expired": "&cTu sesión ha expirado. Por favor reconéctate.",
   
+  "vouch.auth.premium.auto_login": "&aCuenta premium verificada. ¡Inicio de sesión automático exitoso!",
+  "vouch.auth.premium.require_2fa": "&aCuenta premium verificada. &ePor favor completa 2FA: &f/2fa verify <código>",
+  
   "vouch.auth.logout.success": "&eHas cerrado sesión. Sesión invalidada.",
   "vouch.auth.logout.kick": "Has cerrado sesión. Reconéctate para autenticarte.",
   
@@ -61,6 +64,7 @@
   "vouch.ui.title.register_success": "&a✓ ¡Registrado!",
   "vouch.ui.title.wrong_password": "&c✗ Contraseña Incorrecta",
   "vouch.ui.title.2fa_success": "&a✓ ¡2FA Verificado!",
+  "vouch.ui.title.premium_login": "&a✓ ¡Premium Verificado!",
   
   "vouch.ui.subtitle.unregistered": "&eUsa &f/register &epara comenzar",
   "vouch.ui.subtitle.registered": "&eUsa &f/login &epara continuar",
@@ -69,6 +73,8 @@
   "vouch.ui.subtitle.login_success": "&7Ya has iniciado sesión",
   "vouch.ui.subtitle.register_success": "&7Tu cuenta ha sido creada",
   "vouch.ui.subtitle.wrong_password": "&7Intenta de nuevo",
+  "vouch.ui.subtitle.premium_login": "&7Inicio de sesión automático completado",
+  "vouch.ui.subtitle.premium_2fa": "&7Completa 2FA para continuar",
   
   "vouch.ui.actionbar.pre_auth": "&e⏳ Tiempo restante: &f{time}s &8| &e/login o /register",
   "vouch.ui.actionbar.pre_auth_2fa_only": "&e⏳ Tiempo restante: &f{time}s &8| &e/register o /login <código>",

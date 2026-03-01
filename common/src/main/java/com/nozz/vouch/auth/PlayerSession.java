@@ -25,6 +25,9 @@ public final class PlayerSession {
     private String pending2FASecret;        // Secret during 2FA setup (not yet confirmed)
     private boolean is2FAOnlyRegistration;  // True if registering in 2FA-only mode (no password)
 
+    // Premium account tracking
+    private boolean premiumVerified;        // True if verified as premium via Mojang API
+
     // Login attempt tracking for rate limiting
     private int failedAttempts;
     private Instant lastAttemptAt;
@@ -50,6 +53,7 @@ public final class PlayerSession {
         this.requires2FA = false;
         this.awaiting2FA = false;
         this.pending2FASecret = null;
+        this.premiumVerified = false;
         this.failedAttempts = 0;
     }
 
@@ -210,5 +214,19 @@ public final class PlayerSession {
      */
     public boolean is2FAOnlyRegistration() {
         return is2FAOnlyRegistration;
+    }
+
+    /**
+     * Check if this player was verified as a premium account via Mojang API
+     */
+    public boolean isPremiumVerified() {
+        return premiumVerified;
+    }
+
+    /**
+     * Set whether this player was verified as premium
+     */
+    public void setPremiumVerified(boolean premiumVerified) {
+        this.premiumVerified = premiumVerified;
     }
 }

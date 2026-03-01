@@ -592,6 +592,36 @@ public final class UXManager {
     }
 
     /**
+     * Send premium auto-login success feedback
+     */
+    public void onPremiumAutoLogin(ServerPlayerEntity player) {
+        LangManager lang = LangManager.getInstance();
+        sendTitle(player,
+                lang.getRaw("vouch.ui.title.premium_login"),
+                lang.getRaw("vouch.ui.subtitle.premium_login"));
+        playLoginSuccessSound(player);
+        sendMessage(player, lang.getRaw("vouch.auth.premium.auto_login"));
+    }
+
+    /**
+     * Send premium verified but 2FA required feedback
+     */
+    public void onPremiumRequires2FA(ServerPlayerEntity player) {
+        LangManager lang = LangManager.getInstance();
+
+        VouchConfigManager config = VouchConfigManager.getInstance();
+        if (config.clearChatOnJoin()) {
+            clearChat(player);
+        }
+        addPadding(player, config.getWelcomeMessagePadding());
+
+        sendTitle(player,
+                lang.getRaw("vouch.ui.title.premium_login"),
+                lang.getRaw("vouch.ui.subtitle.premium_2fa"));
+        sendMessage(player, lang.getRaw("vouch.auth.premium.require_2fa"));
+    }
+
+    /**
      * Clear action bar
      */
     private void clearActionBar(ServerPlayerEntity player) {
