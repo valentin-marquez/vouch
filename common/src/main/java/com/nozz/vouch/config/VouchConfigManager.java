@@ -50,6 +50,8 @@ public final class VouchConfigManager {
     private int lockoutDuration = 300;
     private int passwordMinLength = 6;
     private int passwordMaxLength = 64;
+    private boolean premiumAutoLogin = false;
+    private boolean premiumAutoLoginRequire2FA = true;
 
     private boolean sessionPersistence = true;
     private int sessionDuration = 3600;
@@ -217,6 +219,8 @@ public final class VouchConfigManager {
         lockoutDuration = resolveInt("auth.lockout_duration", lockoutDuration);
         passwordMinLength = resolveInt("auth.password_min_length", passwordMinLength);
         passwordMaxLength = resolveInt("auth.password_max_length", passwordMaxLength);
+        premiumAutoLogin = resolveBool("auth.premium_auto_login", premiumAutoLogin);
+        premiumAutoLoginRequire2FA = resolveBool("auth.premium_auto_login_require_2fa", premiumAutoLoginRequire2FA);
         
         // Session
         sessionPersistence = resolveBool("session.persistence", sessionPersistence);
@@ -338,6 +342,10 @@ public final class VouchConfigManager {
         config.setComment("auth.lockout_duration", "Lockout duration in seconds");
         config.set("auth.password_min_length", passwordMinLength);
         config.set("auth.password_max_length", passwordMaxLength);
+        config.set("auth.premium_auto_login", premiumAutoLogin);
+        config.setComment("auth.premium_auto_login", "Auto-authenticate players with valid Mojang/Microsoft premium accounts.\nRequires server to be in online-mode=false. Players verified against Mojang API.\nIf using BungeeCord/Velocity with IP forwarding, UUIDs are already forwarded and this still works.");
+        config.set("auth.premium_auto_login_require_2fa", premiumAutoLoginRequire2FA);
+        config.setComment("auth.premium_auto_login_require_2fa", "If true, premium players who have 2FA enabled must still verify their 2FA code.\nRecommended to keep enabled for maximum security.");
         
         // Session
         config.setComment("session", "Session management");
@@ -521,6 +529,8 @@ public final class VouchConfigManager {
     public int getLockoutDuration() { return lockoutDuration; }
     public int getPasswordMinLength() { return passwordMinLength; }
     public int getPasswordMaxLength() { return passwordMaxLength; }
+    public boolean isPremiumAutoLogin() { return premiumAutoLogin; }
+    public boolean isPremiumAutoLoginRequire2FA() { return premiumAutoLoginRequire2FA; }
 
     // Session
     public boolean isSessionPersistenceEnabled() { return sessionPersistence; }

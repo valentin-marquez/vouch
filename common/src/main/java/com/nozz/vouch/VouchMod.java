@@ -9,6 +9,7 @@ import com.nozz.vouch.db.ConnectionFactory;
 import com.nozz.vouch.db.DatabaseManager;
 import com.nozz.vouch.util.LangManager;
 import com.nozz.vouch.util.PermissionHelper;
+import com.nozz.vouch.util.PremiumVerifier;
 import com.nozz.vouch.util.UXManager;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.InteractionEvent;
@@ -163,13 +164,19 @@ public final class VouchMod {
                         UXManager.getInstance().onSessionRestored(serverPlayer);
                         LOGGER.info("Player {} authenticated via persistent session", serverPlayer.getName().getString());
                     } else {
-                        dbManager.isRegistered(serverPlayer.getUuid()).thenAccept(isRegistered -> {
-                            runOnMainThread(() -> {
-                                if (!serverPlayer.isDisconnected()) {
-                                    authManager.addPendingPlayer(serverPlayer, isRegistered);
-                                }
+                        // Check premium auto-login if enabled
+                        VouchConfigManager config = VouchConfigManager.getInstance();
+                        if (config.isPremiumAutoLogin()) {
+                            handlePremiumAutoLogin(serverPlayer, authManager, dbManager);
+                        } else {
+                            dbManager.isRegistered(serverPlayer.getUuid()).thenAccept(isRegistered -> {
+                                runOnMainThread(() -> {
+                                    if (!serverPlayer.isDisconnected()) {
+                                        authManager.addPendingPlayer(serverPlayer, isRegistered);
+                                    }
+                                });
                             });
-                        });
+                        }
                     }
                 });
             });
@@ -239,6 +246,56 @@ public final class VouchMod {
         }, intervalMinutes, intervalMinutes, TimeUnit.MINUTES);
 
         LOGGER.info("Session cleanup scheduler started (interval: {} minutes)", intervalMinutes);
+    }
+
+    /**
+     * Handle premium auto-login flow for a player.
+     * Checks the Mojang API asynchronously, then:
+     * - If premium + no 2FA → auto-authenticate
+     * - If premium + 2FA enabled → send to pre-auth jail for 2FA only
+     * - If not premium → fall back to normal auth flow
+     */
+    private void handlePremiumAutoLogin(ServerPlayerEntity serverPlayer, AuthManager authManager, DatabaseManager dbManager) {
+        PremiumVerifier.getInstance().isPremiumPlayer(serverPlayer).thenAccept(isPremium -> {
+            runOnMainThread(() -> {
+                if (serverPlayer.isDisconnected()) {
+                    return;
+                }
+
+                if (isPremium) {
+                    VouchConfigManager config = VouchConfigManager.getInstance();
+                    // Check if player is registered and has 2FA enabled
+                    if (config.isPremiumAutoLoginRequire2FA()) {
+                        dbManager.has2FAEnabled(serverPlayer.getUuid()).thenAccept(has2FA -> {
+                            runOnMainThread(() -> {
+                                if (serverPlayer.isDisconnected()) return;
+                                if (has2FA) {
+                                    // Premium verified but must complete 2FA
+                                    authManager.addPendingPremiumFor2FA(serverPlayer);
+                                } else {
+                                    // Premium, no 2FA → instant auth
+                                    authManager.authenticateAsPremium(serverPlayer);
+                                    UXManager.getInstance().onPremiumAutoLogin(serverPlayer);
+                                }
+                            });
+                        });
+                    } else {
+                        // 2FA enforcement disabled for premium → instant auth
+                        authManager.authenticateAsPremium(serverPlayer);
+                        UXManager.getInstance().onPremiumAutoLogin(serverPlayer);
+                    }
+                } else {
+                    // Not premium → normal auth flow
+                    dbManager.isRegistered(serverPlayer.getUuid()).thenAccept(isRegistered -> {
+                        runOnMainThread(() -> {
+                            if (!serverPlayer.isDisconnected()) {
+                                authManager.addPendingPlayer(serverPlayer, isRegistered);
+                            }
+                        });
+                    });
+                }
+            });
+        });
     }
 
     /**
