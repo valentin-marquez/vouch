@@ -33,12 +33,12 @@ import java.util.concurrent.TimeUnit;
  * Secure authentication with Argon2id hashing, TOTP 2FA,
  * and multi-database support (H2/SQLite/MySQL/PostgreSQL).
  * 
- * @version 0.1.0 MVP
+ * @version 0.2.0
  */
 public final class VouchMod {
     public static final String MOD_ID = "vouch";
     public static final String MOD_NAME = "Vouch";
-    public static final String VERSION = "0.1.0";
+    public static final String VERSION = "0.2.0";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
 
