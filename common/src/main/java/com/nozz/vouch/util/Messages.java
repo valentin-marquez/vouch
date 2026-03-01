@@ -263,5 +263,13 @@ public final class Messages {
     public static Text databaseConnectionError() {
         return prefixed("vouch.error.database");
     }
+
+    public static Text premiumAutoLogin() {
+        return prefixed("vouch.auth.premium.auto_login");
+    }
+
+    public static Text premiumRequire2FA() {
+        return prefixed("vouch.auth.premium.require_2fa");
+    }
 }
 
