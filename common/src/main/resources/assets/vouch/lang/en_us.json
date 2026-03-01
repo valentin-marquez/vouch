@@ -25,6 +25,9 @@
   "vouch.auth.session_restored": "&aSession restored! Welcome back.",
   "vouch.auth.session_expired": "&cYour session has expired. Please reconnect.",
   
+  "vouch.auth.premium.auto_login": "&aPremium account verified. Auto-login successful!",
+  "vouch.auth.premium.require_2fa": "&aPremium account verified. &ePlease complete 2FA: &f/2fa verify <code>",
+  
   "vouch.auth.logout.success": "&eYou have been logged out. Session invalidated.",
   "vouch.auth.logout.kick": "You have been logged out. Please reconnect to authenticate.",
   
@@ -61,6 +64,7 @@
   "vouch.ui.title.register_success": "&a✓ Registered!",
   "vouch.ui.title.wrong_password": "&c✗ Wrong Password",
   "vouch.ui.title.2fa_success": "&a✓ 2FA Verified!",
+  "vouch.ui.title.premium_login": "&a✓ Premium Verified!",
   
   "vouch.ui.subtitle.unregistered": "&ePlease use &f/register &eto get started",
   "vouch.ui.subtitle.registered": "&ePlease use &f/login &eto continue",
@@ -69,6 +73,8 @@
   "vouch.ui.subtitle.login_success": "&7You are now logged in",
   "vouch.ui.subtitle.register_success": "&7Your account has been created",
   "vouch.ui.subtitle.wrong_password": "&7Please try again",
+  "vouch.ui.subtitle.premium_login": "&7Auto-login complete",
+  "vouch.ui.subtitle.premium_2fa": "&7Complete 2FA to continue",
   
   "vouch.ui.actionbar.pre_auth": "&e⏳ Time remaining: &f{time}s &8| &e/login or /register",
   "vouch.ui.actionbar.pre_auth_2fa_only": "&e⏳ Time remaining: &f{time}s &8| &e/register or /login <code>",

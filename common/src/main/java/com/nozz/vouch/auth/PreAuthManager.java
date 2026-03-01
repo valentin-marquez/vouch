@@ -241,6 +241,44 @@ public final class PreAuthManager {
     }
 
     /**
+     * Start pre-auth state for a premium player who only needs 2FA verification.
+     * Lighter than full pre-auth: only applies effects and shows 2FA-specific messages.
+     */
+    public void startPreAuthPremium2FA(ServerPlayerEntity player, PlayerSession session) {
+        UUID uuid = player.getUuid();
+        VouchConfigManager config = VouchConfigManager.getInstance();
+        UXManager ux = UXManager.getInstance();
+
+        LOGGER.debug("Starting premium 2FA pre-auth for player {}", player.getName().getString());
+
+        if (config.freezePosition()) {
+            session.setJailPosition(
+                player.getX(), player.getY(), player.getZ(),
+                player.getYaw(), player.getPitch()
+            );
+        }
+
+        applyPreAuthEffects(player);
+
+        if (config.hideFromTabList()) {
+            hideFromTabList(player);
+        }
+
+        if (config.hideFromOthers()) {
+            player.addStatusEffect(new StatusEffectInstance(
+                StatusEffects.INVISIBILITY, -1, 0, false, false, false
+            ));
+        }
+
+        ux.onPremiumRequires2FA(player);
+
+        int totalSeconds = config.getLoginTimeout();
+        startCountdown(player, totalSeconds);
+
+        LOGGER.debug("Premium 2FA pre-auth started for {} (timeout: {}s)", player.getName().getString(), totalSeconds);
+    }
+
+    /**
      * Enforce position freeze for a player
      */
     public void enforcePositionFreeze(ServerPlayerEntity player) {
