@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\dev\\\\vouch\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(grep -E \"\\\\.\\(md|rules|instructions\\)$\")",
+      "Bash(xargs wc -l)",
+      "Bash(git -C /c/dev/vouch log --oneline)"
+    ]
+  }
+}
