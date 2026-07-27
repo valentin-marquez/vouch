@@ -69,6 +69,9 @@ processResources {
 shadowJar {
     configurations = [project.configurations.shadowBundle]
     archiveClassifier = 'dev-shadow'
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    exclude '**/module-info.class'
+    exclude 'META-INF/services/java.security.Provider'
 
     relocate 'org.bouncycastle', 'com.nozz.vouch.libs.bc'
     relocate 'com.google.zxing', 'com.nozz.vouch.libs.zxing'

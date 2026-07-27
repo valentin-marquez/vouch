@@ -255,12 +255,38 @@ public final class PremiumVerifier {
 
         if (response.statusCode() == 200) {
             String body = response.body();
-            UUID uuid = extractUuid(body);
-            String name = extractName(body);
+            try {
+                com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(body).getAsJsonObject();
+                
+                String idHex = json.get("id").getAsString();
+                String formattedId = idHex.substring(0, 8) + "-" +
+                                     idHex.substring(8, 12) + "-" +
+                                     idHex.substring(12, 16) + "-" +
+                                     idHex.substring(16, 20) + "-" +
+                                     idHex.substring(20);
+                UUID uuid = UUID.fromString(formattedId);
+                String name = json.get("name").getAsString();
+                
+                GameProfile profile = new GameProfile(uuid, name);
+                
+                if (com.nozz.vouch.config.VouchConfigManager.getInstance().isPremiumFetchSkins()) {
+                    if (json.has("properties")) {
+                        com.google.gson.JsonArray properties = json.getAsJsonArray("properties");
+                        for (com.google.gson.JsonElement el : properties) {
+                            com.google.gson.JsonObject propObj = el.getAsJsonObject();
+                            String propName = propObj.get("name").getAsString();
+                            String propValue = propObj.get("value").getAsString();
+                            String propSignature = propObj.has("signature") ? propObj.get("signature").getAsString() : null;
+                            
+                            profile.getProperties().put(propName, new com.mojang.authlib.properties.Property(propName, propValue, propSignature));
+                        }
+                    }
+                }
 
-            if (uuid != null && name != null) {
-                LOGGER.info("Session verified for {} (UUID: {})", name, uuid);
-                return Optional.of(new GameProfile(uuid, name));
+                LOGGER.info("Session verified for {} (UUID: {}) with {} properties (skins)", name, uuid, profile.getProperties().size());
+                return Optional.of(profile);
+            } catch (Exception e) {
+                LOGGER.error("Failed to parse Mojang session response for " + username, e);
             }
         } else if (response.statusCode() == 204 || response.statusCode() == 404) {
             LOGGER.debug("Session verification failed for {} (not authenticated with Mojang)", username);
