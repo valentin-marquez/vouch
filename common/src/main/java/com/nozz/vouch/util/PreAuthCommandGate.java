@@ -1,5 +1,7 @@
 package com.nozz.vouch.util;
 
+import com.nozz.vouch.config.VouchConfigManager;
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -41,12 +43,11 @@ import java.util.Set;
 public final class PreAuthCommandGate {
 
     /**
-     * Bootstrap allowlist.
+     * Fallback allowlist, used before the configuration is available.
      *
-     * <p>Hardcoded on purpose: the {@code auth.allowed_commands} config key does not
-     * exist yet. When it lands, override {@link #allowedCommands()} to read it (running
-     * the configured values through {@link #normalizeAllowlist(Collection)} first) and
-     * nothing else in this class or in the mixins has to change.
+     * <p>Deliberately the narrowest set that still lets a player authenticate: if
+     * this is ever what takes effect, the worst outcome is that a legitimate
+     * command is refused, never that an unauthenticated one is admitted.
      */
     public static final Set<String> DEFAULT_ALLOWED_COMMANDS =
             Set.of("login", "l", "register", "reg");
@@ -89,12 +90,23 @@ public final class PreAuthCommandGate {
     }
 
     /**
-     * The allowlist currently in force.
+     * The allowlist currently in force: {@code auth.allowed_commands} when the
+     * configuration has loaded, the bootstrap set otherwise.
      *
-     * <p>Single seam for the future {@code auth.allowed_commands} config key.
+     * <p>This runs on the Netty thread for every command an unauthenticated player
+     * sends, including before configuration is ready and after a failed reload has
+     * left the singleton absent. Any failure to read the configuration falls back
+     * to the narrow default rather than propagating — refusing a command is a
+     * recoverable annoyance, throwing out of a packet handler is not.
      */
     public static Set<String> allowedCommands() {
-        return DEFAULT_ALLOWED_COMMANDS;
+        try {
+            Set<String> configured =
+                    normalizeAllowlist(VouchConfigManager.getInstance().getAllowedCommands());
+            return configured.isEmpty() ? DEFAULT_ALLOWED_COMMANDS : configured;
+        } catch (RuntimeException e) {
+            return DEFAULT_ALLOWED_COMMANDS;
+        }
     }
 
     /**
