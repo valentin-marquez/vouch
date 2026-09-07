@@ -1,6 +1,7 @@
 package com.nozz.vouch.util;
 
 import com.mojang.authlib.GameProfile;
+import com.nozz.vouch.config.VouchConfigManager;
 import com.nozz.vouch.VouchMod;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
@@ -254,39 +255,14 @@ public final class PremiumVerifier {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
-            String body = response.body();
-            try {
-                com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(body).getAsJsonObject();
-                
-                String idHex = json.get("id").getAsString();
-                String formattedId = idHex.substring(0, 8) + "-" +
-                                     idHex.substring(8, 12) + "-" +
-                                     idHex.substring(12, 16) + "-" +
-                                     idHex.substring(16, 20) + "-" +
-                                     idHex.substring(20);
-                UUID uuid = UUID.fromString(formattedId);
-                String name = json.get("name").getAsString();
-                
-                GameProfile profile = new GameProfile(uuid, name);
-                
-                if (com.nozz.vouch.config.VouchConfigManager.getInstance().isPremiumFetchSkins()) {
-                    if (json.has("properties")) {
-                        com.google.gson.JsonArray properties = json.getAsJsonArray("properties");
-                        for (com.google.gson.JsonElement el : properties) {
-                            com.google.gson.JsonObject propObj = el.getAsJsonObject();
-                            String propName = propObj.get("name").getAsString();
-                            String propValue = propObj.get("value").getAsString();
-                            String propSignature = propObj.has("signature") ? propObj.get("signature").getAsString() : null;
-                            
-                            profile.getProperties().put(propName, new com.mojang.authlib.properties.Property(propName, propValue, propSignature));
-                        }
-                    }
-                }
+            boolean fetchSkins = VouchConfigManager.getInstance().isPremiumFetchSkins();
+            Optional<GameProfile> profile = MojangSessionParser.parseProfile(response.body(), fetchSkins);
 
-                LOGGER.info("Session verified for {} (UUID: {}) with {} properties (skins)", name, uuid, profile.getProperties().size());
-                return Optional.of(profile);
-            } catch (Exception e) {
-                LOGGER.error("Failed to parse Mojang session response for " + username, e);
+            if (profile.isPresent()) {
+                LOGGER.info("Session verified for {} (UUID: {}, {} profile properties)",
+                        profile.get().getName(), profile.get().getId(),
+                        profile.get().getProperties().size());
+                return profile;
             }
         } else if (response.statusCode() == 204 || response.statusCode() == 404) {
             LOGGER.debug("Session verification failed for {} (not authenticated with Mojang)", username);
@@ -295,18 +271,6 @@ public final class PremiumVerifier {
         }
 
         return Optional.empty();
-    }
-
-    /**
-     * Extract the player name from Mojang API JSON response.
-     */
-    private String extractName(String json) {
-        Pattern namePattern = Pattern.compile("\"name\"\\s*:\\s*\"([a-zA-Z0-9_]{3,16})\"");
-        Matcher matcher = namePattern.matcher(json);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
     }
 
     /**
