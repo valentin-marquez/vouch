@@ -3,6 +3,9 @@ package com.nozz.vouch;
 import com.nozz.vouch.auth.AuthManager;
 import com.nozz.vouch.auth.MixedModeLoginHandler;
 import com.nozz.vouch.auth.PlayerSession;
+import com.nozz.vouch.auth.SessionRestorePolicy;
+import com.nozz.vouch.auth.SessionRestoreFacts;
+import com.nozz.vouch.auth.SessionRestoreDecision;
 import com.nozz.vouch.auth.PreAuthManager;
 import com.nozz.vouch.command.CommandVisibility;
 import com.nozz.vouch.command.CommandTypoCorrector;
@@ -172,34 +175,77 @@ public final class VouchMod {
                 return;
             }
 
-            // An address we cannot resolve is not a session we can validate: sessions are
-            // bound to an IP, so an absent one has to mean "log in again", never "any IP".
+            VouchConfigManager config = VouchConfigManager.getInstance();
             Optional<String> ip = PlayerIps.of(serverPlayer);
-            CompletableFuture<Boolean> sessionCheck = ip
-                    .map(address -> authManager.hasValidSession(serverPlayer.getUuid(), address))
-                    .orElseGet(() -> CompletableFuture.completedFuture(false));
+
+            // Asked exactly once per join, because the record is consumed on read.
+            // Both the session decision and the premium path need the answer.
+            boolean premiumVerified = MixedModeLoginHandler.getInstance()
+                    .wasVerifiedAtLogin(serverPlayer.getUuid(), serverPlayer.getName().getString());
+
+            java.util.function.Function<Boolean, SessionRestoreFacts> facts = twoFactorEnabled ->
+                    SessionRestoreFacts.builder()
+                            .persistenceEnabled(config.isSessionPersistenceEnabled())
+                            .addressKnown(ip.isPresent())
+                            .liveSessionForThisAddress(true)
+                            .premiumVerifiedThisLogin(premiumVerified)
+                            .twoFactorEnabled(twoFactorEnabled)
+                            .require2faOnRestore(config.isSessionRequire2faOnRestore())
+                            .build();
+
+            // Only hit the database when a session could possibly be used at all.
+            boolean sessionWorthChecking = SessionRestorePolicy.decide(
+                    SessionRestoreFacts.builder()
+                            .persistenceEnabled(config.isSessionPersistenceEnabled())
+                            .addressKnown(ip.isPresent())
+                            .liveSessionForThisAddress(true)
+                            .premiumVerifiedThisLogin(premiumVerified)
+                            .build()) != SessionRestoreDecision.NO_SESSION;
+
+            CompletableFuture<Boolean> sessionCheck = sessionWorthChecking
+                    ? authManager.hasValidSession(serverPlayer.getUuid(), ip.orElseThrow())
+                    : CompletableFuture.completedFuture(false);
+
+            Runnable withoutSession = () -> {
+                if (config.isPremiumAutoLogin()) {
+                    handlePremiumAutoLogin(serverPlayer, authManager, dbManager, premiumVerified);
+                } else {
+                    jailPlayer(serverPlayer, authManager, dbManager);
+                }
+            };
 
             onMain(sessionCheck, "session check for " + serverPlayer.getName().getString(), hasValidSession -> {
                 if (serverPlayer.isDisconnected()) {
                     return;
                 }
-
-                if (hasValidSession) {
-                    authManager.authenticateFromSession(serverPlayer);
-                    UXManager.getInstance().onSessionRestored(serverPlayer);
-                    // A restored session never asked the database anything about 2FA, so
-                    // the tree would offer "set up 2FA" to someone who already has it.
-                    syncTwoFactorFlagThenResend(serverPlayer, dbManager);
-                    LOGGER.info("Player {} authenticated via persistent session", serverPlayer.getName().getString());
-                } else {
-                    // Check premium auto-login if enabled
-                    VouchConfigManager config = VouchConfigManager.getInstance();
-                    if (config.isPremiumAutoLogin()) {
-                        handlePremiumAutoLogin(serverPlayer, authManager, dbManager);
-                    } else {
-                        jailPlayer(serverPlayer, authManager, dbManager);
-                    }
+                if (!hasValidSession) {
+                    withoutSession.run();
+                    return;
                 }
+
+                // There is a live session. Whether it is enough depends on the
+                // account's second factor, which a session cannot satisfy.
+                onMain(dbManager.has2FAEnabled(serverPlayer.getUuid()),
+                        "2FA lookup for " + serverPlayer.getName().getString(),
+                        twoFactorEnabled -> {
+                            if (serverPlayer.isDisconnected()) {
+                                return;
+                            }
+                            if (SessionRestorePolicy.decide(facts.apply(twoFactorEnabled))
+                                    == SessionRestoreDecision.RESTORE_NEEDS_2FA) {
+                                authManager.addPendingForSession2FA(serverPlayer);
+                                CommandVisibility.resend(serverPlayer);
+                                LOGGER.info("Player {} restored a session and still owes a 2FA code",
+                                        serverPlayer.getName().getString());
+                                return;
+                            }
+                            authManager.authenticateFromSession(serverPlayer);
+                            UXManager.getInstance().onSessionRestored(serverPlayer);
+                            CommandVisibility.resend(serverPlayer);
+                            LOGGER.info("Player {} authenticated via persistent session",
+                                    serverPlayer.getName().getString());
+                        },
+                        () -> jailPlayer(serverPlayer, authManager, dbManager));
             }, () -> jailPlayer(serverPlayer, authManager, dbManager));
         });
 
@@ -282,17 +328,9 @@ public final class VouchMod {
      * comparing their UUID against the offline UUID for their username.
      * If they differ, the player was verified as premium during login.
      */
-    private void handlePremiumAutoLogin(ServerPlayerEntity serverPlayer, AuthManager authManager, DatabaseManager dbManager) {
+    private void handlePremiumAutoLogin(ServerPlayerEntity serverPlayer, AuthManager authManager,
+                                        DatabaseManager dbManager, boolean verifiedAtLogin) {
         String username = serverPlayer.getName().getString();
-        UUID playerUuid = serverPlayer.getUuid();
-
-        // Ask the login handler whether it actually verified this player, rather
-        // than guessing from the shape of the UUID. A non-offline UUID proves
-        // nothing on its own: Geyser/Floodgate and proxy IP-forwarding both
-        // produce one, and inferring "premium" from it granted password-less
-        // login to anything that could present such a UUID.
-        boolean verifiedAtLogin =
-                MixedModeLoginHandler.getInstance().wasVerifiedAtLogin(playerUuid, username);
 
         if (verifiedAtLogin) {
             // Player was verified as premium during the login handshake.

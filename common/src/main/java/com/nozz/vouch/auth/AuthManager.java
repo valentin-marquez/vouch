@@ -164,6 +164,27 @@ public final class AuthManager {
     }
 
     /**
+     * A restored session got the player this far, but the account has a second
+     * factor and a session is not one. Jails them owing only the code.
+     */
+    public void addPendingForSession2FA(ServerPlayerEntity player) {
+        UUID uuid = player.getUuid();
+        activeSessions.remove(uuid);
+
+        PlayerSession session = new PlayerSession(uuid, player.getName().getString(),
+                PlayerIps.of(player).orElse(null));
+        session.setAwaiting2FA(true);
+        session.setOriginalAllowFlight(player.getAbilities().allowFlying);
+
+        pendingSessions.put(uuid, session);
+
+        PreAuthManager.getInstance().startPreAuthPremium2FA(player, session);
+
+        LOGGER.debug("Player {} restored a session and still owes a 2FA code",
+                player.getName().getString());
+    }
+
+    /**
      * Create a persistent session in the database
      */
     private void createPersistentSession(UUID uuid, String ip) {
