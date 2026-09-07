@@ -50,7 +50,7 @@ public final class PreAuthCommandGate {
      * command is refused, never that an unauthenticated one is admitted.
      */
     public static final Set<String> DEFAULT_ALLOWED_COMMANDS =
-            Set.of("login", "l", "register", "reg");
+            Set.of("login", "l", "register", "reg", "2fa", "vouch", "auth");
 
     private static final Corrector NO_CORRECTION = (rootLiteral, allowed) -> Optional.empty();
 

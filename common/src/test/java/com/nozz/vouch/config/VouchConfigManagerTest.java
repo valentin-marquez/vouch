@@ -438,7 +438,7 @@ class VouchConfigManagerTest {
         @DisplayName("defaults to the login/register command roots")
         void hasSensibleDefault() {
             VouchConfigManager config = init();
-            assertEquals(List.of("login", "l", "register", "reg"), config.getAllowedCommands());
+            assertEquals(List.of("login", "l", "register", "reg", "2fa", "vouch", "auth"), config.getAllowedCommands());
             assertTrue(config.isCommandAllowedPreAuth("login"));
             assertTrue(config.isCommandAllowedPreAuth("/register"));
             assertFalse(config.isCommandAllowedPreAuth("op"));
@@ -467,7 +467,7 @@ class VouchConfigManagerTest {
                     allowed_commands = []
                     """);
 
-            assertEquals(List.of("login", "l", "register", "reg"), init().getAllowedCommands());
+            assertEquals(List.of("login", "l", "register", "reg", "2fa", "vouch", "auth"), init().getAllowedCommands());
         }
 
         @Test

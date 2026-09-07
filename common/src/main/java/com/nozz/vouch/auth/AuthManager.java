@@ -2,6 +2,7 @@ package com.nozz.vouch.auth;
 
 import com.nozz.vouch.config.VouchConfigManager;
 import com.nozz.vouch.db.DatabaseManager;
+import com.nozz.vouch.util.PlayerIps;
 import com.nozz.vouch.util.QRMapRenderer;
 import com.nozz.vouch.util.SessionTokenGenerator;
 import com.nozz.vouch.util.UXManager;
@@ -66,7 +67,7 @@ public final class AuthManager {
         UUID uuid = player.getUuid();
         activeSessions.remove(uuid);
 
-        String ip = getPlayerIP(player);
+        String ip = PlayerIps.of(player).orElse(null);
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         
         session.setOriginalAllowFlight(player.getAbilities().allowFlying);
@@ -111,7 +112,7 @@ public final class AuthManager {
      */
     public void authenticateFromSession(ServerPlayerEntity player) {
         UUID uuid = player.getUuid();
-        String ip = getPlayerIP(player);
+        String ip = PlayerIps.of(player).orElse(null);
 
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         session.markAuthenticated();
@@ -126,16 +127,17 @@ public final class AuthManager {
      */
     public void authenticateAsPremium(ServerPlayerEntity player) {
         UUID uuid = player.getUuid();
-        String ip = getPlayerIP(player);
+        String ip = PlayerIps.of(player).orElse(null);
 
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         session.setPremiumVerified(true);
         session.markAuthenticated();
         activeSessions.put(uuid, session);
 
-        if (VouchConfigManager.getInstance().isSessionPersistenceEnabled()) {
-            createPersistentSession(uuid, ip);
-        }
+        // Deliberately no persistent session: this player proved ownership of
+        // the account cryptographically during login and will do so again next
+        // time. Storing address-trust evidence for them would only add a way in
+        // for whoever shares their address.
 
         LOGGER.info("Player {} authenticated via premium auto-login", player.getName().getString());
     }
@@ -148,7 +150,7 @@ public final class AuthManager {
         UUID uuid = player.getUuid();
         activeSessions.remove(uuid);
 
-        String ip = getPlayerIP(player);
+        String ip = PlayerIps.of(player).orElse(null);
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         session.setPremiumVerified(true);
         session.setAwaiting2FA(true);
@@ -165,6 +167,13 @@ public final class AuthManager {
      * Create a persistent session in the database
      */
     private void createPersistentSession(UUID uuid, String ip) {
+        // The address is the whole of what a session later proves. With no
+        // address there is nothing to bind to and nothing to check on return,
+        // so no session is worth storing.
+        if (ip == null) {
+            LOGGER.debug("No resolvable address for {}; not storing a session", uuid);
+            return;
+        }
         VouchConfigManager config = VouchConfigManager.getInstance();
         String token = SessionTokenGenerator.generateToken();
         String tokenHash = SessionTokenGenerator.hashToken(token);
@@ -292,25 +301,6 @@ public final class AuthManager {
                 });
     }
 
-    private String getPlayerIP(ServerPlayerEntity player) {
-        try {
-            var address = player.networkHandler.getConnectionAddress();
-            if (address != null) {
-                String ip = address.toString();
-                if (ip.startsWith("/")) {
-                    ip = ip.substring(1);
-                }
-                int colonIndex = ip.lastIndexOf(':');
-                if (colonIndex > 0) {
-                    ip = ip.substring(0, colonIndex);
-                }
-                return ip;
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Could not get IP for player {}", player.getName().getString());
-        }
-        return "unknown";
-    }
 
     public void shutdown() {
         pendingSessions.clear();

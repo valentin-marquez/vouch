@@ -146,11 +146,21 @@ public final class VouchConfigManager {
         def("auth.lockout_duration", 300, "Lockout duration in seconds (0-86400)");
         def("auth.password_min_length", 6, "Minimum password length (1-128)");
         def("auth.password_max_length", 64, "Maximum password length (must be >= password_min_length, up to 1024)");
-        def("auth.allowed_commands", List.of("login", "l", "register", "reg"),
+        def("auth.allowed_commands", List.of("login", "l", "register", "reg", "2fa", "vouch", "auth"),
                 """
                 Command roots an unauthenticated player is allowed to run, without the
                 leading '/'. Every other command is blocked until the player logs in.
-                Add aliases here if you rename or proxy the login commands.""");
+                Add aliases here if you rename or proxy the login commands.
+
+                This list is matched on the command root only. Vouch's own subcommands
+                are gated separately and far more precisely, by auth state, so allowing
+                the 'vouch' root does not expose anything an unauthenticated player
+                should not reach.
+
+                A player who has entered their password but still owes a 2FA code is
+                not authenticated yet, so the roots that carry the second factor —
+                '2fa', 'vouch', 'auth' — must stay here or that player can never
+                finish logging in.""");
         def("auth.premium_auto_login", false,
                 "Auto-authenticate players with valid Mojang/Microsoft premium accounts.\n"
                         + "Requires server to be in online-mode=false. Players verified against Mojang API.\n"

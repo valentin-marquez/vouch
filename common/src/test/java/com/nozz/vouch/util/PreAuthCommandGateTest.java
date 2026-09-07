@@ -242,7 +242,7 @@ class PreAuthCommandGateTest {
 
         @Test
         void containsExactlyTheFourBootstrapCommands() {
-            assertEquals(Set.of("login", "l", "register", "reg"),
+            assertEquals(Set.of("login", "l", "register", "reg", "2fa", "vouch", "auth"),
                     PreAuthCommandGate.DEFAULT_ALLOWED_COMMANDS);
         }
 
