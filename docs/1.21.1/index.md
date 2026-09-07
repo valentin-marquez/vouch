@@ -14,7 +14,6 @@ Currently supported: **1.21.1**, **1.21.4** — more coming soon.
 Vouch is available on multiple platforms:
 
 [![Modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/mod/vouch)
-[![CurseForge](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/curseforge_vector.svg)](https://legacy.curseforge.com/minecraft/mc-mods/vouch)
 [![GitHub Releases](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/github_vector.svg)](https://github.com/valentin-marquez/vouch/releases)
 
 **Vouch** is a secure, server-side authentication mod for Minecraft. It supports both **Fabric** and **NeoForge** through the Architectury API.

@@ -144,7 +144,7 @@ jobs:
           if-no-files-found: error
 
   # =============================================================================
-  # Publish Fabric builds to Modrinth & CurseForge
+  # Publish Fabric builds to Modrinth
   # =============================================================================
   publish-fabric:
     needs: [prepare-matrix, build]
@@ -176,14 +176,11 @@ jobs:
             echo "type=release" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish Fabric to Modrinth & CurseForge (MC ${{ matrix.minecraft_version }})
+      - name: Publish Fabric to Modrinth (MC ${{ matrix.minecraft_version }})
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-
-          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           files: fabric-artifacts/vouch-fabric-*.jar
           name: "Vouch ${{ github.event.release.tag_name }} (Fabric ${{ matrix.minecraft_version }})"
@@ -197,7 +194,7 @@ jobs:
             architectury-api | depends
 
   # =============================================================================
-  # Publish NeoForge builds to Modrinth & CurseForge
+  # Publish NeoForge builds to Modrinth
   # =============================================================================
   publish-neoforge:
     needs: [prepare-matrix, build]
@@ -229,14 +226,11 @@ jobs:
             echo "type=release" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish NeoForge to Modrinth & CurseForge (MC ${{ matrix.minecraft_version }})
+      - name: Publish NeoForge to Modrinth (MC ${{ matrix.minecraft_version }})
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-
-          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           files: neoforge-artifacts/vouch-neoforge-*.jar
           name: "Vouch ${{ github.event.release.tag_name }} (NeoForge ${{ matrix.minecraft_version }})"
