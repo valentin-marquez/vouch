@@ -188,21 +188,21 @@ class VouchConfigManagerTest {
         writeConfig("""
                 [database]
                 type = "mysql"
-                password = "${ENV:VOUCH_TEST_UNSET_VARIABLE:s3cr3t-p4ssw0rd}"
+                password = "${ENV:VOUCH_TEST_UNSET_VARIABLE:not-a-real-password-test-fixture}"
                 """);
 
         VouchConfigManager config = init();
 
         // the running mod sees the resolved value...
-        assertEquals("s3cr3t-p4ssw0rd", config.getDatabasePassword());
+        assertEquals("not-a-real-password-test-fixture", config.getDatabasePassword());
 
         config.save();
         String after = readConfig();
 
         // ...but the file keeps the reference.
-        assertTrue(after.contains("${ENV:VOUCH_TEST_UNSET_VARIABLE:s3cr3t-p4ssw0rd}"),
+        assertTrue(after.contains("${ENV:VOUCH_TEST_UNSET_VARIABLE:not-a-real-password-test-fixture}"),
                 "the ${ENV:...} reference was destroyed:\n" + after);
-        assertFalse(after.contains("password = \"s3cr3t-p4ssw0rd\""),
+        assertFalse(after.contains("password = \"not-a-real-password-test-fixture\""),
                 "the resolved secret was written to disk in cleartext:\n" + after);
     }
 
@@ -211,7 +211,7 @@ class VouchConfigManagerTest {
     void typeErrorElsewhereCannotLeakPassword() throws IOException {
         String original = """
                 [database]
-                password = "${ENV:VOUCH_TEST_UNSET_VARIABLE:s3cr3t-p4ssw0rd}"
+                password = "${ENV:VOUCH_TEST_UNSET_VARIABLE:not-a-real-password-test-fixture}"
 
                 [ui.sounds]
                 volume = "loud"
@@ -222,7 +222,7 @@ class VouchConfigManagerTest {
 
         String after = readConfig();
         assertEquals(original, after);
-        assertFalse(after.contains("password = \"s3cr3t-p4ssw0rd\""),
+        assertFalse(after.contains("password = \"not-a-real-password-test-fixture\""),
                 "resolved secret leaked into the file:\n" + after);
     }
 
