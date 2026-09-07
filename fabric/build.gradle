@@ -80,3 +80,5 @@ shadowJar {
 remapJar {
     inputFile.set shadowJar.archiveFile
 }
+
+apply from: rootProject.file('gradle/shadow-sanitization.gradle')

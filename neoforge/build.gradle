@@ -70,14 +70,6 @@ shadowJar {
     configurations = [project.configurations.shadowBundle]
     archiveClassifier = 'dev-shadow'
 
-    // BouncyCastle ships signed: its signature files no longer match once the
-    // classes are relocated, and NeoForge's ModuleClassLoader refuses to load
-    // the jar. The security provider service and module-info go with them —
-    // Vouch uses BC's low-level crypto API directly, never as a JCE provider.
-    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-    exclude '**/module-info.class'
-    exclude 'META-INF/services/java.security.Provider'
-
     relocate 'org.bouncycastle', 'com.nozz.vouch.libs.bc'
     relocate 'com.google.zxing', 'com.nozz.vouch.libs.zxing'
     relocate 'com.zaxxer.hikari', 'com.nozz.vouch.libs.hikari'
@@ -91,35 +83,4 @@ remapJar {
     inputFile.set shadowJar.archiveFile
 }
 
-// Guards the NeoForge startup crash fixed above: if any of these ever creep back
-// into the shadow jar, the server dies at boot with a signature/module error.
-// Verified at build time so it never has to be caught by launching a server.
-def forbiddenShadowEntries = [
-        ~/^META-INF\/.*\.(RSA|SF|DSA)$/,
-        ~/.*module-info\.class$/,
-        ~/^META-INF\/services\/java\.security\.Provider$/,
-]
-
-tasks.register('verifyShadowJarSanitized') {
-    dependsOn tasks.shadowJar
-    def jarProvider = tasks.shadowJar.archiveFile
-    doLast {
-        def offenders = []
-        new java.util.zip.ZipFile(jarProvider.get().asFile).withCloseable { zip ->
-            zip.entries().each { entry ->
-                if (forbiddenShadowEntries.any { entry.name ==~ it }) {
-                    offenders << entry.name
-                }
-            }
-        }
-        if (!offenders.isEmpty()) {
-            throw new GradleException(
-                    "shadowJar contains entries that crash NeoForge at startup:\n  " +
-                            offenders.join("\n  "))
-        }
-        logger.lifecycle("verifyShadowJarSanitized: shadow jar is clean (${offenders.size()} offenders)")
-    }
-}
-
-tasks.named('remapJar') { dependsOn tasks.named('verifyShadowJarSanitized') }
-tasks.named('check') { dependsOn tasks.named('verifyShadowJarSanitized') }
+apply from: rootProject.file('gradle/shadow-sanitization.gradle')
