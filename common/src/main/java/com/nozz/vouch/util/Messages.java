@@ -1,6 +1,8 @@
 package com.nozz.vouch.util;
 
 import com.nozz.vouch.config.VouchConfigManager;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
 import net.minecraft.text.Text;
 
 /**
@@ -290,6 +292,135 @@ public final class Messages {
 
     public static Text premiumAlreadyMarkedOnline() {
         return prefixed("vouch.command.premium.already_marked");
+    }
+
+    // ==================== Clickable suggestions ====================
+
+    /**
+     * Attach "click to fill this command into your chat box" to a message.
+     *
+     * <p>Every prompt this mod sends is a command the player then has to retype, by
+     * hand, while jailed and on a countdown. Brigadier has carried a suggest-command
+     * click event for years; this is one place that uses it.
+     *
+     * <p><b>Translators never see this.</b> The lang files stay plain strings — the
+     * command is passed in by the caller, and the hover text is its own ordinary key.
+     * A translator who does not know what a click event is cannot break one, and a
+     * language that has not been updated still gets a working, clickable message.
+     *
+     * <p>{@link ClickEvent.Action#SUGGEST_COMMAND} fills the chat box rather than
+     * running anything, which is the only correct choice here: these commands take
+     * passwords and one-time codes, and a click that ran them would submit an empty
+     * one.
+     *
+     * @param message   the message to decorate
+     * @param command   what to put in the player's chat box, leading slash included
+     */
+    public static Text suggesting(Text message, String command) {
+        if (message == null || command == null || command.isBlank()) {
+            return message;
+        }
+        Text hover = LangManager.getInstance().getText(ChatSuggestion.HOVER_KEY, "command", command);
+        return message.copy().styled(style -> style
+                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+    }
+
+    /**
+     * Render one entry of the {@link ChatSuggestion} table: its message, carrying its
+     * command as a click-to-fill suggestion.
+     */
+    public static Text suggesting(ChatSuggestion suggestion) {
+        return suggesting(prefixed(suggestion.langKey()), suggestion.command());
+    }
+
+    // ==================== Prompts that suggest their own next step ====================
+
+    /** "You are not registered" — clicking offers {@code /register}. */
+    public static Text notRegisteredClickable() {
+        return suggesting(ChatSuggestion.NOT_REGISTERED);
+    }
+
+    /** "Log in first" — clicking offers {@code /login}. */
+    public static Text mustLoginFirstClickable() {
+        return suggesting(ChatSuggestion.MUST_LOGIN_FIRST);
+    }
+
+    /** "Second factor required" — clicking offers {@code /2fa verify}. */
+    public static Text twoFactorRequiredClickable() {
+        return suggesting(ChatSuggestion.TWO_FACTOR_REQUIRED);
+    }
+
+    /** "2FA is off" — clicking offers {@code /vouch 2fa setup}. */
+    public static Text twoFactorStatusDisabledClickable() {
+        return suggesting(ChatSuggestion.TWO_FACTOR_STATUS_DISABLED);
+    }
+
+    /** The setup instructions, with the verify command one click away. */
+    public static Text twoFactorSetupInstructionsClickable() {
+        return suggesting(ChatSuggestion.TWO_FACTOR_SETUP_INSTRUCTIONS);
+    }
+
+    /** Operators told to configure 2FA get the command that does it. */
+    public static Text twoFactorRequiredForOpsClickable() {
+        return suggesting(ChatSuggestion.TWO_FACTOR_REQUIRED_FOR_OPS);
+    }
+
+    // ==================== Password changes ====================
+
+    public static Text passwordChanged() {
+        return prefixed("vouch.auth.password.changed");
+    }
+
+    public static Text passwordWrongCurrent() {
+        return prefixed("vouch.auth.password.wrong_current");
+    }
+
+    public static Text passwordUnchanged() {
+        return prefixed("vouch.auth.password.unchanged");
+    }
+
+    public static Text passwordResetFor(String playerName) {
+        return prefixed("vouch.admin.user.password_reset", "player", playerName);
+    }
+
+    // ==================== Account info ====================
+
+    public static Text userInfoHeader(String playerName) {
+        return prefixed("vouch.admin.user.info.header", "player", playerName);
+    }
+
+    public static Text userInfoUuid(String uuid) {
+        return text("vouch.admin.user.info.uuid", "value", uuid);
+    }
+
+    public static Text userInfoTwoFactor(String value) {
+        return text("vouch.admin.user.info.2fa", "value", value);
+    }
+
+    public static Text userInfoLastLogin(String value) {
+        return text("vouch.admin.user.info.last_login", "value", value);
+    }
+
+    public static Text userInfoLastIp(String value) {
+        return text("vouch.admin.user.info.last_ip", "value", value);
+    }
+
+    public static Text userInfoPremium(String value) {
+        return text("vouch.admin.user.info.premium", "value", value);
+    }
+
+    /** Plain words for the info lines above, so they can be translated too. */
+    public static String valueYes() {
+        return LangManager.getInstance().get("vouch.value.yes");
+    }
+
+    public static String valueNo() {
+        return LangManager.getInstance().get("vouch.value.no");
+    }
+
+    public static String valueNever() {
+        return LangManager.getInstance().get("vouch.value.never");
     }
 }
 

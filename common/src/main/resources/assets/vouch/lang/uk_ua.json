@@ -95,5 +95,22 @@
   "vouch.command.disabled.password": "&cАвторизацію за паролем вимкнено на цьому сервері.",
   
   "vouch.error.internal": "&cСталася внутрішня помилка. Зв'яжіться з адміністратором.",
-  "vouch.error.database": "&cНе вдалося підключитися до бази даних. Спробуйте пізніше."
+  "vouch.error.database": "&cНе вдалося підключитися до бази даних. Спробуйте пізніше.",
+  
+  "vouch.ui.click_to_fill": "&7Натисніть, щоб підставити &f{command}",
+  
+  "vouch.auth.password.changed": "&aПароль змінено.",
+  "vouch.auth.password.wrong_current": "&cЦе не ваш поточний пароль.",
+  "vouch.auth.password.unchanged": "&cНовий пароль має відрізнятися від поточного.",
+  
+  "vouch.admin.user.password_reset": "&aПароль скинуто для &6{player}&a.",
+  "vouch.admin.user.info.header": "&6Обліковий запис: &f{player}",
+  "vouch.admin.user.info.uuid": "&7  UUID: &f{value}",
+  "vouch.admin.user.info.2fa": "&7  Двофакторний захист: &f{value}",
+  "vouch.admin.user.info.last_login": "&7  Останній вхід: &f{value}",
+  "vouch.admin.user.info.last_ip": "&7  Остання адреса: &f{value}",
+  "vouch.admin.user.info.premium": "&7  Автовхід premium: &f{value}",
+  "vouch.value.yes": "так",
+  "vouch.value.no": "ні",
+  "vouch.value.never": "ніколи"
 }

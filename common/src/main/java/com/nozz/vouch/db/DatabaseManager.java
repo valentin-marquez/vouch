@@ -594,6 +594,134 @@ public final class DatabaseManager {
     }
 
     /**
+     * Replace the stored password hash of an existing account.
+     *
+     * <p>Two callers: an explicit password change, and the transparent rehash that
+     * {@code /login} performs when {@code Argon2Hasher.needsRehash} says the stored
+     * hash was produced with parameters the server no longer uses. The rehash can
+     * only happen there, because that successful verification is the one moment the
+     * plain text password exists.
+     *
+     * <p>A blank hash is refused rather than written: the column is the only thing
+     * standing between an account and anyone who claims it, and a caller that
+     * managed to produce an empty hash has already gone wrong.
+     *
+     * @return {@code true} when a row was updated; {@code false} for an unknown
+     *         account, a refused hash, or a database error
+     */
+    public CompletableFuture<Boolean> updatePassword(UUID uuid, String passwordHash) {
+        if (passwordHash == null || passwordHash.isBlank()) {
+            LOGGER.error("Refusing to store a blank password hash for {}", uuid);
+            return CompletableFuture.completedFuture(false);
+        }
+        return async(() -> {
+            try (Connection conn = connectionFactory.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(
+                         "UPDATE vouch_players SET password_hash = ? WHERE uuid = ?")) {
+
+                stmt.setString(1, passwordHash);
+                stmt.setString(2, uuid.toString());
+                return stmt.executeUpdate() > 0;
+
+            } catch (SQLException e) {
+                LOGGER.error("Error updating password for {}", uuid, e);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Every registered username, for seeding the in-memory set that feeds
+     * tab-completion at server start.
+     *
+     * <p>Run once at boot, never per keystroke. Returns an empty list rather than
+     * failing: an empty completion list is a worse experience than a full one, but
+     * it is not an outage.
+     */
+    public CompletableFuture<List<String>> listRegisteredUsernames() {
+        return async(() -> {
+            List<String> usernames = new ArrayList<>();
+            try (Connection conn = connectionFactory.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(
+                         "SELECT username FROM vouch_players");
+                 ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    String username = rs.getString("username");
+                    if (username != null && !username.isBlank()) {
+                        usernames.add(username);
+                    }
+                }
+
+            } catch (SQLException e) {
+                LOGGER.error("Error listing registered usernames", e);
+            }
+            return usernames;
+        });
+    }
+
+    /** One account by UUID, without its credentials. See {@link PlayerRecord}. */
+    public CompletableFuture<Optional<PlayerRecord>> getPlayerRecord(UUID uuid) {
+        return async(() -> {
+            try (Connection conn = connectionFactory.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(
+                         "SELECT uuid, username, totp_enabled, last_login, last_ip, created_at"
+                                 + " FROM vouch_players WHERE uuid = ?")) {
+
+                stmt.setString(1, uuid.toString());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    return rs.next() ? Optional.of(readPlayerRecord(rs)) : Optional.<PlayerRecord>empty();
+                }
+
+            } catch (SQLException e) {
+                LOGGER.error("Error reading player record for {}", uuid, e);
+                return Optional.<PlayerRecord>empty();
+            }
+        });
+    }
+
+    /**
+     * One account by username, case-insensitively.
+     *
+     * <p>Admin commands name a player by the string an admin typed, and that player
+     * may well be offline and absent from the server's user cache. Looking the name
+     * up here is what lets {@code /vouch admin user &lt;player&gt; info} answer for
+     * someone who has not logged in for a month.
+     */
+    public CompletableFuture<Optional<PlayerRecord>> findPlayerByName(String username) {
+        if (username == null || username.isBlank()) {
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
+        String normalized = username.trim().toLowerCase(Locale.ROOT);
+        return async(() -> {
+            try (Connection conn = connectionFactory.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(
+                         "SELECT uuid, username, totp_enabled, last_login, last_ip, created_at"
+                                 + " FROM vouch_players WHERE LOWER(username) = ?")) {
+
+                stmt.setString(1, normalized);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    return rs.next() ? Optional.of(readPlayerRecord(rs)) : Optional.<PlayerRecord>empty();
+                }
+
+            } catch (SQLException e) {
+                LOGGER.error("Error looking up player named {}", username, e);
+                return Optional.<PlayerRecord>empty();
+            }
+        });
+    }
+
+    private static PlayerRecord readPlayerRecord(ResultSet rs) throws SQLException {
+        return new PlayerRecord(
+                UUID.fromString(rs.getString("uuid")),
+                rs.getString("username"),
+                rs.getBoolean("totp_enabled"),
+                Optional.ofNullable(rs.getTimestamp("last_login")).map(Timestamp::toInstant),
+                Optional.ofNullable(rs.getString("last_ip")),
+                Optional.ofNullable(rs.getTimestamp("created_at")).map(Timestamp::toInstant));
+    }
+
+    /**
      * Update last login info
      */
     public CompletableFuture<Void> updateLastLogin(UUID uuid, String ip) {
