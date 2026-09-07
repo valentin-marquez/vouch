@@ -101,5 +101,22 @@
   "vouch.command.disabled.password": "&cPassword authentication is disabled on this server.",
   
   "vouch.error.internal": "&cAn internal error occurred. Please contact an administrator.",
-  "vouch.error.database": "&cCould not connect to database. Please try again later."
+  "vouch.error.database": "&cCould not connect to database. Please try again later.",
+  
+  "vouch.ui.click_to_fill": "&7Click to fill in &f{command}",
+  
+  "vouch.auth.password.changed": "&aPassword changed.",
+  "vouch.auth.password.wrong_current": "&cThat is not your current password.",
+  "vouch.auth.password.unchanged": "&cThe new password must be different from the current one.",
+  
+  "vouch.admin.user.password_reset": "&aPassword reset for &6{player}&a.",
+  "vouch.admin.user.info.header": "&6Account: &f{player}",
+  "vouch.admin.user.info.uuid": "&7  UUID: &f{value}",
+  "vouch.admin.user.info.2fa": "&7  Two-factor: &f{value}",
+  "vouch.admin.user.info.last_login": "&7  Last login: &f{value}",
+  "vouch.admin.user.info.last_ip": "&7  Last address: &f{value}",
+  "vouch.admin.user.info.premium": "&7  Premium auto-login: &f{value}",
+  "vouch.value.yes": "yes",
+  "vouch.value.no": "no",
+  "vouch.value.never": "never"
 }

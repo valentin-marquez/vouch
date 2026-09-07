@@ -84,5 +84,22 @@
   "vouch.command.disabled.2fa": "&cAutenticação de dois fatores está desabilitada no servidor.",
   "vouch.command.disabled.password": "&cAutenticação por senha está desabilitada no servidor.",
   "vouch.error.internal": "&cOcorreu um erro interno. Por favor contate um administrador.",
-  "vouch.error.database": "&cNão foi possível conectar ao banco de dados. Por favor tente novamente mais tarde."
+  "vouch.error.database": "&cNão foi possível conectar ao banco de dados. Por favor tente novamente mais tarde.",
+  
+  "vouch.ui.click_to_fill": "&7Clique para preencher &f{command}",
+  
+  "vouch.auth.password.changed": "&aSenha alterada.",
+  "vouch.auth.password.wrong_current": "&cEssa não é a sua senha atual.",
+  "vouch.auth.password.unchanged": "&cA nova senha precisa ser diferente da atual.",
+  
+  "vouch.admin.user.password_reset": "&aSenha redefinida para &6{player}&a.",
+  "vouch.admin.user.info.header": "&6Conta: &f{player}",
+  "vouch.admin.user.info.uuid": "&7  UUID: &f{value}",
+  "vouch.admin.user.info.2fa": "&7  Dois fatores: &f{value}",
+  "vouch.admin.user.info.last_login": "&7  Último acesso: &f{value}",
+  "vouch.admin.user.info.last_ip": "&7  Último endereço: &f{value}",
+  "vouch.admin.user.info.premium": "&7  Login automático premium: &f{value}",
+  "vouch.value.yes": "sim",
+  "vouch.value.no": "não",
+  "vouch.value.never": "nunca"
 }
