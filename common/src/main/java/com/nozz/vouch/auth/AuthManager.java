@@ -252,9 +252,11 @@ public final class AuthManager {
     /**
      * Check if a player has a valid persistent session (Phase 4).
      * 
-     * Respects session.bind_to_ip config:
-     * - If true: Validates session for specific UUID + IP combination
-     * - If false: Validates session for UUID only (any IP allowed)
+     * A session is always bound to the address it was created from. The address
+     * is the only evidence a stored session carries: on an offline-mode server
+     * the UUID is derived from the username, so it proves nothing on its own.
+     * The former session.bind_to_ip = false mode, which checked the UUID alone,
+     * therefore authenticated anyone who knew a username, and is gone.
      * 
      * @param uuid Player UUID
      * @param ip Player's current IP address
@@ -265,14 +267,6 @@ public final class AuthManager {
         
         if (!config.isSessionPersistenceEnabled()) {
             return CompletableFuture.completedFuture(false);
-        }
-        
-        // If bind_to_ip is disabled, use a wildcard approach
-        // We still validate by IP since that's how sessions are stored,
-        // but we could extend DatabaseManager to support IP-less validation
-        if (!config.isSessionBindToIp()) {
-            // For simplicity, when bind_to_ip is false, we validate any existing session for this UUID
-            return DatabaseManager.getInstance().hasAnyValidSession(uuid);
         }
         
         return DatabaseManager.getInstance().validateSession(uuid, ip);

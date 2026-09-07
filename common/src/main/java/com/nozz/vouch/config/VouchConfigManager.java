@@ -171,8 +171,12 @@ public final class VouchConfigManager {
         section("session", "Session management");
         def("session.persistence", true, "Remember sessions across reconnects");
         def("session.duration", 3600, "Session validity in seconds (60-2592000, default: 1 hour)");
-        def("session.bind_to_ip", true, null);
-        def("session.bind_to_uuid", true, null);
+        def("session.require_2fa_on_restore", true,
+                "Ask for the 2FA code even when a stored session is restored.\n"
+                        + "A restored session only proves that someone reached the server from\n"
+                        + "the same address; it is not a second factor. Leave this on if any of\n"
+                        + "your players share an outbound address, which is the normal case\n"
+                        + "behind CGNAT.");
         def("session.cleanup_interval", 300, "Seconds between expired-session sweeps (10-86400)");
 
         section("totp", "Two-Factor Authentication (TOTP) settings");
@@ -280,8 +284,7 @@ public final class VouchConfigManager {
 
     private boolean sessionPersistence;
     private int sessionDuration;
-    private boolean sessionBindToIp;
-    private boolean sessionBindToUuid;
+    private boolean sessionRequire2faOnRestore;
     private int sessionCleanupInterval;
 
     private boolean require2FAForOps;
@@ -688,8 +691,7 @@ public final class VouchConfigManager {
 
         sessionPersistence = flag("session.persistence");
         sessionDuration = num("session.duration");
-        sessionBindToIp = flag("session.bind_to_ip");
-        sessionBindToUuid = flag("session.bind_to_uuid");
+        sessionRequire2faOnRestore = flag("session.require_2fa_on_restore");
         sessionCleanupInterval = num("session.cleanup_interval");
 
         require2FAForOps = flag("totp.require_for_ops");
@@ -769,8 +771,8 @@ public final class VouchConfigManager {
 
         sessionPersistence = resolveBool("session.persistence");
         sessionDuration = resolveInt("session.duration");
-        sessionBindToIp = resolveBool("session.bind_to_ip");
-        sessionBindToUuid = resolveBool("session.bind_to_uuid");
+        sessionRequire2faOnRestore = resolveBool("session.require_2fa_on_restore");
+        warnAboutRemovedSessionKeys();
         sessionCleanupInterval = resolveInt("session.cleanup_interval");
 
         require2FAForOps = resolveBool("totp.require_for_ops");
@@ -1166,10 +1168,29 @@ public final class VouchConfigManager {
     }
 
     // Session
+    /**
+     * Tell an administrator whose config still carries the removed session keys
+     * what happened, instead of silently changing how their server behaves.
+     */
+    private void warnAboutRemovedSessionKeys() {
+        if (config == null) {
+            return;
+        }
+        if (config.contains("session.bind_to_ip") && Boolean.FALSE.equals(config.get("session.bind_to_ip"))) {
+            LOGGER.warn("session.bind_to_ip = false is no longer supported and is being ignored. "
+                    + "Without an address to check, a stored session proved only that someone knew "
+                    + "the username, which on an offline-mode server is public. Sessions are now "
+                    + "always bound to the address they were created from.");
+        }
+        if (config.contains("session.bind_to_uuid")) {
+            LOGGER.warn("session.bind_to_uuid is no longer a setting and is being ignored. "
+                    + "It was documented but never read by any code path.");
+        }
+    }
+
     public boolean isSessionPersistenceEnabled() { return sessionPersistence; }
     public int getSessionDuration() { return sessionDuration; }
-    public boolean isSessionBindToIp() { return sessionBindToIp; }
-    public boolean isSessionBindToUuid() { return sessionBindToUuid; }
+    public boolean isSessionRequire2faOnRestore() { return sessionRequire2faOnRestore; }
     public int getSessionCleanupInterval() { return sessionCleanupInterval; }
 
     // 2FA

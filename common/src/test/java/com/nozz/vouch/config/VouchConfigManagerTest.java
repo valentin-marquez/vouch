@@ -514,7 +514,7 @@ class VouchConfigManagerTest {
                 "lockout_duration", "password_min_length", "password_max_length",
                 "allowed_commands", "premium_auto_login", "premium_auto_login_require_2fa",
                 "premium_offline_by_default", "premium_fetch_skins", "persistence", "duration",
-                "bind_to_ip", "bind_to_uuid", "cleanup_interval", "require_for_ops", "issuer",
+                "require_2fa_on_restore", "cleanup_interval", "require_for_ops", "issuer",
                 "window_size", "time_step", "memory_cost", "iterations", "parallelism",
                 "language", "fade_in", "stay", "fade_out", "errors_enabled", "color", "style",
                 "blindness_level", "slowness_level", "hide_from_others", "hide_from_tab_list",
@@ -527,6 +527,13 @@ class VouchConfigManagerTest {
 
         assertTrue(config.isPremiumOfflineByDefault());
         assertTrue(config.isPremiumFetchSkins());
+
+        // bind_to_ip and bind_to_uuid were removed deliberately: the first
+        // authenticated anyone who knew a username when set to false, the
+        // second was documented but read by nothing. Assert they stay gone, so
+        // a future merge cannot quietly bring them back.
+        assertFalse(written.contains("bind_to_ip"), "bind_to_ip was removed:\n" + written);
+        assertFalse(written.contains("bind_to_uuid"), "bind_to_uuid was removed:\n" + written);
     }
 
     @Test
