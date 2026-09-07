@@ -1,0 +1,51 @@
+// Applied by both platform builds.
+//
+// BouncyCastle ships signed and multi-release. Once shadow relocates it:
+//   - its META-INF signature files no longer match the classes, and NeoForge's
+//     ModuleClassLoader refuses to load the jar (server dies at startup);
+//   - the java.security.Provider service file still names the pre-relocation
+//     classes, which shadow does not rewrite, so a ServiceLoader pass over
+//     security providers throws ServiceConfigurationError.
+//
+// Vouch uses BouncyCastle's low-level crypto API directly (Argon2BytesGenerator)
+// and never registers it as a JCE provider, so none of that metadata is needed.
+//
+// The verification task exists because both failures only surface at runtime, in
+// somebody else's server. Checking the jar is cheaper than booting one.
+
+def forbiddenShadowEntries = [
+        ~/^META-INF\/.*\.(RSA|SF|DSA)$/,
+        ~/.*module-info\.class$/,
+        ~/^META-INF\/services\/java\.security\.Provider$/,
+]
+
+shadowJar {
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    exclude '**/module-info.class'
+    exclude 'META-INF/services/java.security.Provider'
+}
+
+tasks.register('verifyShadowJarSanitized') {
+    description = 'Fails if the shadow jar carries metadata that breaks mod loaders at runtime.'
+    dependsOn tasks.shadowJar
+    def jarProvider = tasks.shadowJar.archiveFile
+    doLast {
+        def offenders = []
+        new java.util.zip.ZipFile(jarProvider.get().asFile).withCloseable { zip ->
+            zip.entries().each { entry ->
+                if (forbiddenShadowEntries.any { entry.name ==~ it }) {
+                    offenders << entry.name
+                }
+            }
+        }
+        if (!offenders.isEmpty()) {
+            throw new GradleException(
+                    "shadow jar carries entries that break mod loaders at runtime:\n  " +
+                            offenders.join("\n  "))
+        }
+        logger.lifecycle("verifyShadowJarSanitized: ${jarProvider.get().asFile.name} is clean")
+    }
+}
+
+tasks.named('remapJar') { dependsOn tasks.named('verifyShadowJarSanitized') }
+tasks.named('check') { dependsOn tasks.named('verifyShadowJarSanitized') }
