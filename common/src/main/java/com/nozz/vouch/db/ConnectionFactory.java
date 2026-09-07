@@ -9,28 +9,43 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Connection factory for database access.
- * 
- * Supports multiple database types:
+ *
+ * Supports the database types Vouch actually ships drivers for:
  * - H2 (default, embedded)
- * - SQLite
  * - MySQL
  * - PostgreSQL
- * 
+ *
+ * SQLite is deliberately absent: the {@code org.xerial:sqlite-jdbc} driver is
+ * declared in no build file and is not in the shipped jar, so selecting it
+ * could only ever fail at boot with a driver-not-found error.
+ *
  * Uses HikariCP for high-performance connection pooling.
  */
 public final class ConnectionFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger("Vouch/ConnectionFactory");
 
+    /** Fallback pool size when the pool has not been initialised yet. */
+    public static final int DEFAULT_POOL_MAX_SIZE = 10;
+
     private static ConnectionFactory instance;
     private HikariDataSource dataSource;
     private DatabaseType databaseType;
+    private int poolMaxSize = DEFAULT_POOL_MAX_SIZE;
+
+    /**
+     * Callbacks run (in registration order) immediately before the pool is closed,
+     * so that components owning blocking work can drain before their connections
+     * are yanked. Cleared once the pool is closed.
+     */
+    private final List<Runnable> preCloseHooks = new CopyOnWriteArrayList<>();
 
     public enum DatabaseType {
         H2("org.h2.Driver"),
-        SQLITE("org.sqlite.JDBC"),
         MYSQL("com.mysql.cj.jdbc.Driver"),
         POSTGRESQL("org.postgresql.Driver");
 
@@ -72,7 +87,6 @@ public final class ConnectionFactory {
                 case H2 -> "com.nozz.vouch.libs.h2.Driver";
                 case MYSQL -> "com.nozz.vouch.libs.mysql.cj.jdbc.Driver";
                 case POSTGRESQL -> "com.nozz.vouch.libs.postgresql.Driver";
-                case SQLITE -> driverClass; // SQLite is not relocated
             };
             
             for (ClassLoader loader : loaders) {
@@ -120,14 +134,21 @@ public final class ConnectionFactory {
         String type = config.getDatabaseType().toLowerCase();
         String jdbcUrl = config.getJdbcUrl(dataDir);
         
+        if ("sqlite".equals(type)) {
+            // Silently falling back to H2 here would hand the H2 driver a `jdbc:sqlite:`
+            // URL and fail with something unrelated-looking. Say what is actually wrong.
+            throw new IllegalStateException("database.type = \"sqlite\" is not supported: "
+                    + "Vouch ships no SQLite JDBC driver. Use \"h2\" (embedded, the default), "
+                    + "\"mysql\" or \"postgresql\".");
+        }
+
         DatabaseType dbType = switch (type) {
             case "mysql" -> DatabaseType.MYSQL;
             case "postgresql", "postgres" -> DatabaseType.POSTGRESQL;
-            case "sqlite" -> DatabaseType.SQLITE;
             default -> DatabaseType.H2;
         };
         
-        if (dbType == DatabaseType.H2 || dbType == DatabaseType.SQLITE) {
+        if (dbType == DatabaseType.H2) {
             initialize(dbType, jdbcUrl, null, null);
         } else {
             initialize(dbType, jdbcUrl, config.getDatabaseUser(), config.getDatabasePassword());
@@ -148,9 +169,23 @@ public final class ConnectionFactory {
     }
 
     /**
-     * Initialize the connection pool with custom configuration
+     * Initialize the connection pool with custom configuration, taking the pool
+     * sizing from {@link VouchConfigManager}.
      */
     public void initialize(DatabaseType type, String jdbcUrl, String username, String password) {
+        VouchConfigManager vouchConfig = VouchConfigManager.getInstance();
+        initialize(type, jdbcUrl, username, password,
+                vouchConfig.getDatabasePoolMaxSize(), vouchConfig.getDatabasePoolMinIdle());
+    }
+
+    /**
+     * Initialize the connection pool with custom configuration and explicit pool sizing.
+     *
+     * This overload takes no dependency on {@link VouchConfigManager}, so it can be
+     * driven by tests (or any caller) without the mod's configuration being loaded.
+     */
+    public void initialize(DatabaseType type, String jdbcUrl, String username, String password,
+                           int poolMaxSize, int poolMinIdle) {
         if (dataSource != null) {
             LOGGER.warn("Connection pool already initialized, closing existing pool...");
             close();
@@ -197,10 +232,10 @@ public final class ConnectionFactory {
             config.setPassword(password);
         }
 
-        // Connection pool settings from configuration
-        VouchConfigManager vouchConfig = VouchConfigManager.getInstance();
-        config.setMaximumPoolSize(vouchConfig.getDatabasePoolMaxSize());
-        config.setMinimumIdle(vouchConfig.getDatabasePoolMinIdle());
+        // Connection pool settings
+        this.poolMaxSize = Math.max(1, poolMaxSize);
+        config.setMaximumPoolSize(this.poolMaxSize);
+        config.setMinimumIdle(Math.max(0, Math.min(poolMinIdle, this.poolMaxSize)));
         config.setIdleTimeout(300000);        // 5 minutes
         config.setConnectionTimeout(10000);   // 10 seconds
         config.setMaxLifetime(1800000);       // 30 minutes
@@ -242,6 +277,26 @@ public final class ConnectionFactory {
         return databaseType;
     }
 
+    /**
+     * Maximum size of the connection pool. Falls back to {@link #DEFAULT_POOL_MAX_SIZE}
+     * before {@code initialize} has run, so callers sizing their own resources from it
+     * always get a sane number.
+     */
+    public int getPoolMaxSize() {
+        return poolMaxSize;
+    }
+
+    /**
+     * Register a callback to run just before the pool is closed. Used by
+     * {@link DatabaseManager} to drain its executor without the shutdown path
+     * having to know about it.
+     */
+    public void addPreCloseHook(Runnable hook) {
+        if (hook != null) {
+            preCloseHooks.add(hook);
+        }
+    }
+
     public boolean isInitialized() {
         return dataSource != null && !dataSource.isClosed();
     }
@@ -250,6 +305,15 @@ public final class ConnectionFactory {
      * Close the connection pool
      */
     public void close() {
+        for (Runnable hook : preCloseHooks) {
+            try {
+                hook.run();
+            } catch (RuntimeException e) {
+                LOGGER.warn("Pre-close hook failed", e);
+            }
+        }
+        preCloseHooks.clear();
+
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
             LOGGER.info("Database connection pool closed");
