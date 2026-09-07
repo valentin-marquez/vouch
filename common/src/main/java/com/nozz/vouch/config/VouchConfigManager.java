@@ -53,6 +53,7 @@ public final class VouchConfigManager {
     private boolean premiumAutoLogin = false;
     private boolean premiumAutoLoginRequire2FA = true;
     private boolean premiumOfflineByDefault = true;
+    private boolean premiumFetchSkins = true;
 
     private boolean sessionPersistence = true;
     private int sessionDuration = 3600;
@@ -223,6 +224,7 @@ public final class VouchConfigManager {
         premiumAutoLogin = resolveBool("auth.premium_auto_login", premiumAutoLogin);
         premiumAutoLoginRequire2FA = resolveBool("auth.premium_auto_login_require_2fa", premiumAutoLoginRequire2FA);
         premiumOfflineByDefault = resolveBool("auth.premium_offline_by_default", premiumOfflineByDefault);
+        premiumFetchSkins = resolveBool("auth.premium_fetch_skins", premiumFetchSkins);
         
         // Session
         sessionPersistence = resolveBool("session.persistence", sessionPersistence);
@@ -350,6 +352,8 @@ public final class VouchConfigManager {
         config.setComment("auth.premium_auto_login_require_2fa", "If true, premium players who have 2FA enabled must still verify their 2FA code.\nRecommended to keep enabled for maximum security.");
         config.set("auth.premium_offline_by_default", premiumOfflineByDefault);
         config.setComment("auth.premium_offline_by_default", "If true, ALL players are treated as offline by default (no encryption challenge).\nPlayers must run /vouch markAsOnline to opt into premium auto-login on their next join.\nPrevents 'Invalid session' errors for cracked clients using premium usernames.\nIf false, any username that exists in the Mojang API will receive an encryption challenge.");
+        config.set("auth.premium_fetch_skins", premiumFetchSkins);
+        config.setComment("auth.premium_fetch_skins", "Fetch player skins from Mojang API during session verification.");
         
         // Session
         config.setComment("session", "Session management");
@@ -536,6 +540,7 @@ public final class VouchConfigManager {
     public boolean isPremiumAutoLogin() { return premiumAutoLogin; }
     public boolean isPremiumAutoLoginRequire2FA() { return premiumAutoLoginRequire2FA; }
     public boolean isPremiumOfflineByDefault() { return premiumOfflineByDefault; }
+    public boolean isPremiumFetchSkins() { return premiumFetchSkins; }
 
     // Session
     public boolean isSessionPersistenceEnabled() { return sessionPersistence; }
