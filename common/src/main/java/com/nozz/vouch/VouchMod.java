@@ -1,6 +1,7 @@
 package com.nozz.vouch;
 
 import com.nozz.vouch.auth.AuthManager;
+import com.nozz.vouch.auth.MixedModeLoginHandler;
 import com.nozz.vouch.auth.PreAuthManager;
 import com.nozz.vouch.command.TwoFactorCommands;
 import com.nozz.vouch.command.VouchCommands;
@@ -264,10 +265,13 @@ public final class VouchMod {
         String username = serverPlayer.getName().getString();
         UUID playerUuid = serverPlayer.getUuid();
 
-        // Check if this player's UUID differs from the offline-mode UUID.
-        // If it does, the mixin already verified them as premium during login.
-        UUID offlineUuid = net.minecraft.util.Uuids.getOfflinePlayerUuid(username);
-        boolean verifiedAtLogin = !playerUuid.equals(offlineUuid);
+        // Ask the login handler whether it actually verified this player, rather
+        // than guessing from the shape of the UUID. A non-offline UUID proves
+        // nothing on its own: Geyser/Floodgate and proxy IP-forwarding both
+        // produce one, and inferring "premium" from it granted password-less
+        // login to anything that could present such a UUID.
+        boolean verifiedAtLogin =
+                MixedModeLoginHandler.getInstance().wasVerifiedAtLogin(playerUuid, username);
 
         if (verifiedAtLogin) {
             // Player was verified as premium during the login handshake.
@@ -376,6 +380,7 @@ public final class VouchMod {
     public void shutdown() {
         LOGGER.info("Shutting down {}...", MOD_NAME);
         AuthManager.getInstance().shutdown();
+        PremiumVerifier.getInstance().shutdown();
 
         ConnectionFactory.getInstance().close();
         scheduler.shutdownNow();
