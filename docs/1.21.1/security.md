@@ -97,15 +97,22 @@ Sessions allow players to reconnect without re-authenticating.
 ### Security Model
 
 1. **Token generation**: 32 bytes (256 bits) via `SecureRandom`
-2. **Storage**: Only the **SHA-256 hash** of the token is stored in the database
-3. **Binding**: Sessions are bound to both UUID and IP address (configurable)
-4. **Expiration**: Configurable duration (default: 1 hour)
-5. **Cleanup**: Automatic periodic removal of expired sessions
+2. **Binding**: A session records the UUID and the address it was created from, and is only restored for that same address
+3. **Expiration**: Configurable duration (default: 1 hour)
+4. **Cleanup**: Automatic periodic removal of expired sessions
 
 This means:
-- Even if the database is compromised, session tokens cannot be recovered
-- Session hijacking requires access to the same IP address
+- Restoring a session requires connecting from the same address it was created from
+- A player who was premium-verified this login does not use sessions at all
+- If the account has 2FA, the code is still required on restore by default
 - Old sessions are automatically pruned
+
+::: warning
+A session is address trust, not a token the player holds. Anyone sharing the
+player's outbound address — the same house, office, VPN exit, or CGNAT pool —
+can use it until it expires. See [Sessions](./configuration/sessions) for the
+full threat model before raising `session.duration`.
+:::
 
 ### Session Lifecycle
 

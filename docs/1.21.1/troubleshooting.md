@@ -24,7 +24,7 @@ Solutions for common issues with Vouch.
 
 **Solutions:**
 - Increase `session.duration` (default: 3600 seconds / 1 hour)
-- Check if the player's IP changed (dynamic IP with `bind_to_ip = true`)
+- Check whether the player's address changed — a session is only restored for the address it was created from, and dynamic or mobile addresses change often
 - Verify `session.persistence` is `true`
 
 ### Login timeout too short

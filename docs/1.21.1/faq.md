@@ -66,9 +66,11 @@ The player will be kicked (if online) and can rejoin to create a new account.
 
 **Absolutely not.** Passwords are hashed using **Argon2id** with a unique 128-bit salt per password. The original password is never stored or recoverable.
 
-### Can session tokens be stolen from the database?
+### What does a session actually protect?
 
-Even if the database is compromised, session tokens are **SHA-256 hashed** before storage. The original token cannot be recovered from the hash.
+Less than you might expect, and it is worth knowing exactly what. Vouch is server-side, so it cannot hand a vanilla client a secret to present on reconnect. A session records the address the player authenticated from, and restoring one means "somebody reached us from that same address, recently" — not "this is the same person".
+
+So anyone sharing that outbound address can use it until it expires. Premium-verified players skip sessions entirely, and 2FA is still required on restore by default. If your players are behind CGNAT, consider `session.persistence = false`. See [Sessions](./configuration/sessions).
 
 ---
 
