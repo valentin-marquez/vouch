@@ -353,7 +353,7 @@ public final class VouchConfigManager {
         config.set("auth.premium_offline_by_default", premiumOfflineByDefault);
         config.setComment("auth.premium_offline_by_default", "If true, ALL players are treated as offline by default (no encryption challenge).\nPlayers must run /vouch markAsOnline to opt into premium auto-login on their next join.\nPrevents 'Invalid session' errors for cracked clients using premium usernames.\nIf false, any username that exists in the Mojang API will receive an encryption challenge.");
         config.set("auth.premium_fetch_skins", premiumFetchSkins);
-        config.setComment("auth.premium_fetch_skins", "Fetch player skins from Mojang API during session verification.");
+        config.setComment("auth.premium_fetch_skins", "Fetch the player's signed profile properties (skin and cape) from the Mojang\nsession server during premium verification.\nDisable only if you serve skins from another source.");
         
         // Session
         config.setComment("session", "Session management");
