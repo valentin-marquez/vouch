@@ -12,6 +12,11 @@ max_attempts = 5
 lockout_duration = 300
 password_min_length = 6
 password_max_length = 64
+allowed_commands = ["login", "l", "register", "reg", "2fa", "vouch", "auth"]
+premium_auto_login = false
+premium_auto_login_require_2fa = true
+premium_offline_by_default = true
+premium_fetch_skins = true
 ```
 
 ### `mode`
@@ -84,3 +89,60 @@ Minimum password length required during registration.
 | **Default** | `64` |
 
 Maximum password length allowed. Prevents excessively long inputs that could slow down hashing.
+
+### `allowed_commands`
+
+| | |
+|---|---|
+| **Type** | List of strings |
+| **Default** | `["login", "l", "register", "reg", "2fa", "vouch", "auth"]` |
+
+Command roots (without the leading `/`) that an unauthenticated player may run. Every other command is blocked until the player logs in. Add aliases here if you rename or proxy the login commands.
+
+The list is matched on the command root only. Vouch's own subcommands are gated separately, by authentication state, so keeping `vouch` here does not expose anything an unauthenticated player should not reach.
+
+::: warning
+A player who has entered their password but still owes a 2FA code is not authenticated yet. The roots that carry the second factor (`2fa`, `vouch`, `auth`) must stay in the list, or that player can never finish logging in. An empty list is rejected and replaced by the defaults.
+:::
+
+## Premium accounts
+
+These options control automatic login for players with a valid Mojang/Microsoft account. They need the server to run with `online-mode=false`. Players are verified against the Mojang API with the standard encryption handshake.
+
+### `premium_auto_login`
+
+| | |
+|---|---|
+| **Type** | Boolean |
+| **Default** | `false` |
+
+Authenticate premium players automatically when they join. Works behind BungeeCord/Velocity with IP forwarding, since UUIDs are already forwarded.
+
+### `premium_auto_login_require_2fa`
+
+| | |
+|---|---|
+| **Type** | Boolean |
+| **Default** | `true` |
+
+If `true`, a premium player who has 2FA enabled still has to enter their code. Keeping it enabled is recommended.
+
+### `premium_offline_by_default`
+
+| | |
+|---|---|
+| **Type** | Boolean |
+| **Default** | `true` |
+
+If `true`, every player is treated as offline (no encryption challenge) until they opt in with `/vouch premium` and join again. This prevents "Invalid session" errors for cracked clients that use a premium username.
+
+If `false`, any username that exists in the Mojang API receives an encryption challenge. Admins can pin a name with `/vouch admin premium <player> force-offline`.
+
+### `premium_fetch_skins`
+
+| | |
+|---|---|
+| **Type** | Boolean |
+| **Default** | `true` |
+
+Fetch the player's signed profile properties (skin and cape) from the Mojang session server during premium verification. Disable it only if you serve skins from another source.

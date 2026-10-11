@@ -81,9 +81,45 @@ The player is disconnected from the server and all stored sessions are deleted. 
 
 ---
 
+### `/vouch password`
+
+Change your own password.
+
+```
+/vouch password <oldPassword> <newPassword>
+```
+
+| | |
+|---|---|
+| **Permission** | `vouch.command.login` |
+| **Default** | All players |
+| **Requires** | Authenticated, a mode that uses passwords |
+
+Verifies the old password, then stores the new one. Failed attempts count toward the rate limit.
+
+---
+
+### `/vouch premium`
+
+Opt into premium auto-login.
+
+```
+/vouch premium
+```
+
+| | |
+|---|---|
+| **Permission** | `vouch.command.mark-as-online` |
+| **Default** | All players |
+| **Requires** | Authenticated, `auth.premium_auto_login = true` |
+
+Checks that your username exists in the Mojang API and marks the account as premium. On your next join Vouch asks the client for the encryption handshake and logs you in automatically. The old name `/vouch markAsOnline` still works. See [Authentication](configuration/authentication#premium-accounts).
+
+---
+
 ## 2FA Commands
 
-All 2FA commands are under the `/2fa` prefix. These commands are **disabled** in `password_only` mode.
+All 2FA commands are under the `/2fa` prefix. `/2fa` is a shortcut for `/vouch 2fa`, so `/vouch 2fa setup` works too. These commands are **disabled** in `password_only` mode.
 
 ### `/2fa setup`
 
@@ -182,9 +218,48 @@ Reloads `vouch.toml` and all language files from disk without restarting the ser
 
 ---
 
+### `/vouch admin user`
+
+Inspect or manage a registered account.
+
+```
+/vouch admin user <player> info
+/vouch admin user <player> unregister
+/vouch admin user <player> resetpw <newPassword>
+```
+
+| | |
+|---|---|
+| **Permission** | `vouch.admin.unregister` |
+| **Default** | OP level 4 |
+
+- `info`: shows the UUID, whether 2FA is enabled, last login, last IP and premium status.
+- `unregister`: same as `/vouch admin unregister <player>` below.
+- `resetpw`: sets a new password (validated against `password_min_length` and `password_max_length`) and invalidates the player's persistent sessions.
+
+---
+
+### `/vouch admin premium`
+
+Pin a username to offline login, or release it.
+
+```
+/vouch admin premium <player> force-offline
+/vouch admin premium <player> force-online
+```
+
+| | |
+|---|---|
+| **Permission** | `vouch.admin.premium-override` |
+| **Default** | OP level 4 |
+
+`force-offline` stops premium auto-login for that name; `force-online` removes the override. It works for names with no account yet, so you can pin a name before its owner joins. The older `/vouch admin force-offline <player>` and `force-online <player>` still work.
+
+---
+
 ### `/vouch admin unregister`
 
-Remove a player's registration.
+Remove a player's registration. Legacy spelling of `/vouch admin user <player> unregister`.
 
 ```
 /vouch admin unregister <player>
@@ -223,4 +298,6 @@ Exports the active language file to `config/vouch/lang/` for customization. If t
 | `/auth` | `/vouch` |
 | `/auth admin reload` | `/vouch admin reload` |
 | `/auth admin unregister` | `/vouch admin unregister` |
+| `/2fa ...` | `/vouch 2fa ...` |
+| `/l`, `/reg` | `/login`, `/register` |
 | `/auth admin export-lang` | `/vouch admin export-lang` |

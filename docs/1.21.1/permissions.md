@@ -11,6 +11,9 @@ Vouch uses a permission system that integrates with both Fabric and NeoForge per
 | `vouch.command.register` | All players (OP 0) | Use `/register` |
 | `vouch.command.login` | All players (OP 0) | Use `/login` |
 | `vouch.command.logout` | All players (OP 0) | Use `/logout` |
+| `vouch.command.mark-as-online` | All players (OP 0) | Use `/vouch premium` to opt into premium auto-login |
+
+`/vouch password` is covered by `vouch.command.login`.
 
 ### 2FA Commands
 
@@ -26,8 +29,9 @@ Vouch uses a permission system that integrates with both Fabric and NeoForge per
 | Permission | Default | Description |
 |------------|---------|-------------|
 | `vouch.admin.reload` | OP level 4 | Use `/vouch admin reload` |
-| `vouch.admin.unregister` | OP level 4 | Use `/vouch admin unregister` |
+| `vouch.admin.unregister` | OP level 4 | Use `/vouch admin user <player> ...` (`info`, `unregister`, `resetpw`) and the legacy `/vouch admin unregister` |
 | `vouch.admin.export-lang` | OP level 4 | Use `/vouch admin export-lang` |
+| `vouch.admin.premium-override` | OP level 4 | Use `/vouch admin premium <player> force-offline\|force-online` |
 
 ### Special
 
@@ -61,6 +65,7 @@ This is compatible with:
 /lp group admin permission set vouch.admin.reload true
 /lp group admin permission set vouch.admin.unregister true
 /lp group admin permission set vouch.admin.export-lang true
+/lp group admin permission set vouch.admin.premium-override true
 
 # Grant auth bypass to a service account
 /lp user ServiceBot permission set vouch.bypass.auth true

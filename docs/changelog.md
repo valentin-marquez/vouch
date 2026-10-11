@@ -2,6 +2,35 @@
 
 All notable changes to Vouch are documented here.
 
+## [0.4.0] — 2026-09-07
+
+- **Commands:** one command tree shared by `/vouch` and `/auth`, with completion and visibility that follow the player's state. New `/vouch password`, `/vouch premium`, `/vouch admin user <player> info|unregister|resetpw` and `/vouch admin premium <player> force-offline|force-online`. `/2fa`, `/l` and `/reg` stay as shortcuts.
+- **Fix:** a player who owes a 2FA code can now send it. The `2fa_only` mode could not be completed on a stock configuration (issue #9).
+- **Security:** pre-auth jail also blocks commands and inventory; `vouch.bypass.auth` is explicit-grant-only; premium login is async, bounded and fail-closed; session restore now proves identity and the session policy is consulted on join.
+- **Config:** new `auth.allowed_commands`; `vouch.toml` is no longer overwritten, and malformed or invalid values are reported.
+- **Database:** versioned schema, fixed MySQL DDL, dedicated DB executor, 2FA read fails closed.
+- **Crypto:** Argon2 parameters are stored inside the hash (PHC format).
+
+## [0.3.1] — 2026-09-06
+
+- Fix NeoForge crash with BouncyCastle; fetch skins during premium verification (`auth.premium_fetch_skins`).
+- Brazilian Portuguese translation.
+
+## [0.3.0] — 2026-05-09
+
+- Mixed-mode premium login with cryptographic verification.
+- Shadow jar no longer bundles SLF4J.
+
+## [0.2.1] — 2026-05-09
+
+- Relocation for the checkerframework library; Russian and Ukrainian translations.
+
+## [0.2.0] — 2026-03-01
+
+- Premium auto-login for online accounts (`auth.premium_auto_login`).
+- Fix environment variables not being read for integer, boolean and float options.
+- Multi-version builds for 1.21.2, 1.21.4, 1.21.5 and 1.21.6 (now frozen as legacy).
+
 ## [0.1.0] — 2026-02-05
 
 ### Initial Release (MVP)
