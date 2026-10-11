@@ -5,15 +5,27 @@
 // Exit code 0 only if every step passed, so it chains: node e2e/run.mjs && git push origin main
 // Needs eula=true in <loader>/run/eula.txt (accept it yourself: https://aka.ms/MinecraftEULA).
 import mineflayer from 'mineflayer';
+import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { createHmac } from 'node:crypto';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, readlinkSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 25599;
-const MC_VERSION = '1.21.1';
+// The bot speaks whatever Minecraft version this branch builds.
+const MC_VERSION = readFileSync(resolve(ROOT, 'gradle.properties'), 'utf8').match(/^minecraft_version\s*=\s*(\S+)/m)[1];
+// The bot libraries lag the game. Say so up front instead of failing on a join timeout.
+// (26.2: minecraft-data lists the version but ships no packet schemas, and the protocol changed
+// from 26.1, so aliasing the older schemas stalls in the configuration phase.)
+if (!createRequire(import.meta.url)('minecraft-data')(MC_VERSION)) {
+  console.error(`The bot libraries (mineflayer/minecraft-data) have no protocol data for Minecraft ${MC_VERSION} yet.\n` +
+    'Update them when upstream ships it; until then this gate can only run on versions they support.');
+  process.exit(3);
+}
+// Optional: run Gradle on another JDK than ~/.gradle/gradle.properties pins (26.x needs 25).
+const GRADLE_JDK = process.env.E2E_JAVA_HOME ? [`-Dorg.gradle.java.home=${process.env.E2E_JAVA_HOME}`] : [];
 const args = process.argv.slice(2);
 const loader = args.find(a => ['fabric', 'neoforge'].includes(a)) ?? 'fabric';
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
@@ -46,6 +58,22 @@ function setProps(file, kv) {
   writeFileSync(file, s);
 }
 
+// Gradle runs the server in a worker JVM that can outlive the client we kill, and a stale one
+// keeps writing into world/ while the next run is wiping it. Find servers by their cwd instead.
+const serversIn = dir => readdirSync('/proc')
+  .filter(p => /^\d+$/.test(p))
+  .filter(p => { try { return readlinkSync(`/proc/${p}/cwd`) === dir; } catch { return false; } })
+  .map(Number);
+
+async function reapServers() {
+  for (let i = 0; i < 60; i++) {
+    const pids = serversIn(RUN);
+    if (!pids.length) return;
+    if (i >= 20) pids.forEach(p => { try { process.kill(p, i >= 50 ? 'SIGKILL' : 'SIGTERM'); } catch {} });
+    await new Promise(r => setTimeout(r, 500));
+  }
+}
+
 function prepare() {
   const eula = `${RUN}/eula.txt`;
   if (!existsSync(eula) || !/eula=true/.test(readFileSync(eula, 'utf8'))) {
@@ -56,15 +84,16 @@ function prepare() {
   for (const d of ['config/vouch', 'vouch', 'world']) rmSync(`${RUN}/${d}`, { recursive: true, force: true });
   setProps(`${RUN}/server.properties`, {
     'online-mode': 'false', 'server-port': PORT, 'view-distance': 2, 'simulation-distance': 2,
-    'level-type': 'minecraft\\:flat', 'generate-structures': 'false', 'spawn-protection': 0,
+    'level-type': 'minecraft\\:normal', 'generate-structures': 'false', 'spawn-protection': 0,
     'enable-command-block': 'false', 'motd': 'vouch-e2e',
   });
 }
 
-function startServer(env) {
+async function startServer(env) {
+  await reapServers();
   prepare();
   writeFileSync(LOG, '');
-  const proc = spawn('./gradlew', [`:${loader}:runServer`, '--console=plain'], {
+  const proc = spawn('./gradlew', [...GRADLE_JDK, `:${loader}:runServer`, '--console=plain'], {
     cwd: ROOT, env: { ...process.env, ...env }, detached: true,
   });
   const append = d => writeFileSync(LOG, d, { flag: 'a' });
@@ -72,7 +101,12 @@ function startServer(env) {
   proc.stderr.on('data', append);
   const ready = new Promise((ok, fail) => {
     const t = setTimeout(() => fail(new Error(`server not ready in 4 min, see ${LOG}`)), 240000);
-    proc.stdout.on('data', d => /Done \(\d/.test(d) && (clearTimeout(t), ok()));
+    proc.stdout.on('data', d => {
+      if (/Done \(\d/.test(d)) { clearTimeout(t); ok(); }
+      else if (/can't proceed with server load|Failed to start the minecraft server/.test(d)) {
+        clearTimeout(t); fail(new Error(`server could not start, see ${LOG}`));
+      }
+    });
     proc.on('exit', c => (clearTimeout(t), fail(new Error(`server exited early (${c}), see ${LOG}`))));
   });
   return { proc, ready };
@@ -85,10 +119,17 @@ async function stopServer({ proc }) {
   const killer = setTimeout(() => { try { process.kill(-proc.pid, 'SIGKILL'); } catch {} }, 20000);
   await gone;
   clearTimeout(killer);
+  await reapServers();
 }
 
 // ---------- bot ----------
 const BAD = /Unknown or incomplete command/i; // what issue #9 looked like to the player
+
+const WORLD_PLUGINS = ['bed', 'block_actions', 'blocks', 'book', 'boss_bar', 'breath', 'chest', 'command_block',
+  'craft', 'creative', 'digging', 'enchantment_table', 'entities', 'experience', 'explosion', 'fishing',
+  'furnace', 'inventory', 'physics', 'place_block', 'rain', 'ray_trace', 'resource_pack', 'scoreboard', 'team',
+  'simple_inventory', 'sound', 'spawn_point', 'tablist', 'time', 'villager', 'anvil', 'place_entity',
+  'generic_place', 'particle'];
 
 class Player {
   msgs = []; cursor = 0; kicked = null; ended = false;
@@ -97,13 +138,16 @@ class Player {
   async join() {
     this.bot = mineflayer.createBot({
       host: '127.0.0.1', port: PORT, username: this.name, auth: 'offline', version: MC_VERSION, hideErrors: true,
+      // Chat and commands only. The world plugins need chunk/block data that does not exist for
+      // versions newer than prismarine-chunk knows, and the flows never touch the world.
+      plugins: Object.fromEntries(WORLD_PLUGINS.map(n => [n, false])),
     });
     this.bot.on('messagestr', m => this.msgs.push(m));
     this.bot.on('kicked', r => (this.kicked = typeof r === 'string' ? r : JSON.stringify(r)));
     this.bot.on('end', () => (this.ended = true));
     await new Promise((ok, fail) => {
-      const t = setTimeout(() => fail(new Error('bot did not spawn in 30s')), 30000);
-      this.bot.once('spawn', () => (clearTimeout(t), ok()));
+      const t = setTimeout(() => fail(new Error('bot did not log in within 30s')), 30000);
+      this.bot.once('login', () => (clearTimeout(t), ok()));
       this.bot.once('error', e => (clearTimeout(t), fail(e)));
     });
     return this;
@@ -223,7 +267,7 @@ let failed = 0;
 for (const [name, sc] of Object.entries(scenarios)) {
   if (only && only !== name) continue;
   console.log(`\n# ${loader} / ${name}`);
-  const server = startServer(sc.env);
+  const server = await startServer(sc.env);
   const players = [];
   const join = async n => { const p = await new Player(n).join(); players.push(p); return p; };
   const step = async (label, fn) => {
