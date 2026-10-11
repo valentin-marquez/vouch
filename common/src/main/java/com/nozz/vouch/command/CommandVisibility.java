@@ -49,7 +49,10 @@ public final class CommandVisibility {
         }
 
         PlayerSession session = auth.getSession(player.getUuid());
-        if (session != null && session.isAwaiting2FA()) {
+        // A 2FA-only registration has no account yet (it is created when the first code
+        // verifies), so the only thing marking the player as owing a code is the pending
+        // setup on the session. Without this /2fa verify is hidden and refused.
+        if (session != null && (session.isAwaiting2FA() || session.is2FAOnlyRegistration())) {
             return PlayerAuthState.AWAITING_2FA;
         }
 
