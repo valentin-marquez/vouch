@@ -64,7 +64,7 @@ function prepare() {
 function startServer(env) {
   prepare();
   writeFileSync(LOG, '');
-  const proc = spawn('./gradlew', [`:${loader}:runServer`, '--offline', '--console=plain'], {
+  const proc = spawn('./gradlew', [`:${loader}:runServer`, '--console=plain'], {
     cwd: ROOT, env: { ...process.env, ...env }, detached: true,
   });
   const append = d => writeFileSync(LOG, d, { flag: 'a' });
@@ -79,6 +79,7 @@ function startServer(env) {
 }
 
 async function stopServer({ proc }) {
+  if (proc.exitCode !== null) return;
   const gone = new Promise(r => proc.once('exit', r));
   try { process.kill(-proc.pid, 'SIGTERM'); } catch {}
   const killer = setTimeout(() => { try { process.kill(-proc.pid, 'SIGKILL'); } catch {} }, 20000);
