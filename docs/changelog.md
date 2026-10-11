@@ -2,10 +2,14 @@
 
 All notable changes to Vouch are documented here.
 
+## [0.4.1] — 2026-10-11
+
+- **Fix:** a player who owes a 2FA code can now send it. In `2fa_only` mode `/2fa verify` was refused right after `/register` ("Unknown or incomplete command"), so registration could not be completed (issue #9). The 0.4.0 beta did not fix this.
+- **Docs:** the 1.21.1 documentation now covers the 0.4 commands, permissions and options.
+
 ## [0.4.0] — 2026-09-07
 
 - **Commands:** one command tree shared by `/vouch` and `/auth`, with completion and visibility that follow the player's state. New `/vouch password`, `/vouch premium`, `/vouch admin user <player> info|unregister|resetpw` and `/vouch admin premium <player> force-offline|force-online`. `/2fa`, `/l` and `/reg` stay as shortcuts.
-- **Fix:** a player who owes a 2FA code can now send it. The `2fa_only` mode could not be completed on a stock configuration (issue #9).
 - **Security:** pre-auth jail also blocks commands and inventory; `vouch.bypass.auth` is explicit-grant-only; premium login is async, bounded and fail-closed; session restore now proves identity and the session policy is consulted on join.
 - **Config:** new `auth.allowed_commands`; `vouch.toml` is no longer overwritten, and malformed or invalid values are reported.
 - **Database:** versioned schema, fixed MySQL DDL, dedicated DB executor, 2FA read fails closed.
