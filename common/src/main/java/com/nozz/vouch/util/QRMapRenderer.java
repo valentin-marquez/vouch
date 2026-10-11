@@ -6,13 +6,6 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.network.packet.s2c.play.MapUpdateS2CPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +16,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 /**
  * Renders QR codes onto Minecraft maps for TOTP 2FA setup.
@@ -70,7 +71,7 @@ public final class QRMapRenderer {
      * @param otpAuthUri The otpauth:// URI to encode
      * @return true if QR was generated and sent successfully
      */
-    public static boolean sendQRCodeMap(ServerPlayerEntity player, String otpAuthUri) {
+    public static boolean sendQRCodeMap(ServerPlayer player, String otpAuthUri) {
         try {
             BitMatrix qrMatrix = generateQRCode(otpAuthUri);
             if (qrMatrix == null) {
@@ -147,33 +148,33 @@ public final class QRMapRenderer {
      * This method saves the player's current main hand item (if any) before
      * placing the QR map, so it can be restored later.
      */
-    private static void sendVirtualMap(ServerPlayerEntity player, byte[] colors) {
-        UUID uuid = player.getUuid();
+    private static void sendVirtualMap(ServerPlayer player, byte[] colors) {
+        UUID uuid = player.getUUID();
         
         int virtualMapId = 32767 - player.getId();
 
         ItemStack mapStack = new ItemStack(Items.FILLED_MAP);
-        mapStack.set(DataComponentTypes.MAP_ID, new MapIdComponent(virtualMapId));
+        mapStack.set(DataComponents.MAP_ID, new MapId(virtualMapId));
 
-        MapUpdateS2CPacket mapPacket = new MapUpdateS2CPacket(
-                new MapIdComponent(virtualMapId),
+        ClientboundMapItemDataPacket mapPacket = new ClientboundMapItemDataPacket(
+                new MapId(virtualMapId),
                 (byte) 0,
                 true,
                 Optional.empty(),
-                Optional.of(new MapState.UpdateData(0, 0, MAP_SIZE, MAP_SIZE, colors))
+                Optional.of(new MapItemSavedData.MapPatch(0, 0, MAP_SIZE, MAP_SIZE, colors))
         );
 
         sendPacket(player, mapPacket);
 
-        int selectedSlot = player.getInventory().selectedSlot;
-        ItemStack originalItem = player.getMainHandStack();
+        int selectedSlot = player.getInventory().selected;
+        ItemStack originalItem = player.getMainHandItem();
    
         if (!savedSlots.containsKey(uuid)) {
             savedSlots.put(uuid, new SavedInventorySlot(selectedSlot, originalItem.copy()));
             LOGGER.debug("Saved original item from slot {} for player {}", selectedSlot, player.getName().getString());
         }
 
-        player.getInventory().setStack(selectedSlot, mapStack);
+        player.getInventory().setItem(selectedSlot, mapStack);
 
         LOGGER.debug("Virtual map {} sent to player {}", virtualMapId, player.getName().getString());
     }
@@ -182,20 +183,20 @@ public final class QRMapRenderer {
      * Remove any QR map items from a player's inventory and restore original item.
      * Called after 2FA setup is complete, cancelled, or on player disconnect.
      */
-    public static void removeQRMap(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public static void removeQRMap(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         int virtualMapId = 32767 - player.getId();
         var inventory = player.getInventory();
 
         boolean mapRemoved = false;
         int mapSlot = -1;
         
-        for (int i = 0; i < inventory.size(); i++) {
-            ItemStack stack = inventory.getStack(i);
-            if (stack.isOf(Items.FILLED_MAP)) {
-                MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.is(Items.FILLED_MAP)) {
+                MapId mapId = stack.get(DataComponents.MAP_ID);
                 if (mapId != null && mapId.id() == virtualMapId) {
-                    inventory.setStack(i, ItemStack.EMPTY);
+                    inventory.setItem(i, ItemStack.EMPTY);
                     mapSlot = i;
                     mapRemoved = true;
                     LOGGER.debug("Removed QR map from player {} slot {}", player.getName().getString(), i);
@@ -206,12 +207,12 @@ public final class QRMapRenderer {
 
         SavedInventorySlot saved = savedSlots.remove(uuid);
         if (saved != null && mapRemoved && mapSlot == saved.slotIndex) {
-            inventory.setStack(saved.slotIndex, saved.originalItem);
+            inventory.setItem(saved.slotIndex, saved.originalItem);
             LOGGER.debug("Restored original item to slot {} for player {}", saved.slotIndex, player.getName().getString());
         } else if (saved != null) {
             if (!saved.originalItem.isEmpty()) {
-                if (!inventory.insertStack(saved.originalItem)) {
-                    player.dropItem(saved.originalItem, false);
+                if (!inventory.add(saved.originalItem)) {
+                    player.drop(saved.originalItem, false);
                     LOGGER.debug("Dropped original item for player {} (inventory full)", player.getName().getString());
                 } else {
                     LOGGER.debug("Inserted original item back to inventory for player {}", player.getName().getString());

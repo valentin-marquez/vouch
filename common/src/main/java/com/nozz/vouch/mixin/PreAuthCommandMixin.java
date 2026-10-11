@@ -3,13 +3,13 @@ package com.nozz.vouch.mixin;
 import com.nozz.vouch.auth.AuthManager;
 import com.nozz.vouch.util.Messages;
 import com.nozz.vouch.util.PreAuthCommandGate;
-import net.minecraft.network.packet.c2s.play.ChatCommandSignedC2SPacket;
-import net.minecraft.network.packet.c2s.play.CommandExecutionC2SPacket;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
+import net.minecraft.network.protocol.game.ServerboundChatCommandSignedPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -48,17 +48,17 @@ import java.util.Optional;
  * arrives here as {@link PreAuthCommandGate.Decision#suggestion()} — no change to this
  * mixin is required.
  */
-@Mixin(ServerPlayNetworkHandler.class)
+@Mixin(ServerGamePacketListenerImpl.class)
 public abstract class PreAuthCommandMixin {
 
     @Shadow
-    public ServerPlayerEntity player;
+    public ServerPlayer player;
 
     /**
      * Gate unsigned command packets (the common case, e.g. {@code /login secret}).
      */
-    @Inject(method = "onCommandExecution", at = @At("HEAD"), cancellable = true)
-    private void vouch$gateCommandExecution(CommandExecutionC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleChatCommand", at = @At("HEAD"), cancellable = true)
+    private void vouch$gateCommandExecution(ServerboundChatCommandPacket packet, CallbackInfo ci) {
         if (vouch$shouldBlock(packet.command())) {
             ci.cancel();
         }
@@ -67,8 +67,8 @@ public abstract class PreAuthCommandMixin {
     /**
      * Gate signed command packets (commands carrying signable message arguments).
      */
-    @Inject(method = "onChatCommandSigned", at = @At("HEAD"), cancellable = true)
-    private void vouch$gateSignedCommand(ChatCommandSignedC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleSignedChatCommand", at = @At("HEAD"), cancellable = true)
+    private void vouch$gateSignedCommand(ServerboundChatCommandSignedPacket packet, CallbackInfo ci) {
         if (vouch$shouldBlock(packet.command())) {
             ci.cancel();
         }
@@ -79,7 +79,7 @@ public abstract class PreAuthCommandMixin {
      */
     @Unique
     private boolean vouch$shouldBlock(String rawCommand) {
-        ServerPlayerEntity currentPlayer = this.player;
+        ServerPlayer currentPlayer = this.player;
         if (currentPlayer == null || AuthManager.getInstance().isAuthenticated(currentPlayer)) {
             return false;
         }
@@ -98,22 +98,22 @@ public abstract class PreAuthCommandMixin {
      * I/O thread here.
      */
     @Unique
-    private void vouch$notifyBlocked(ServerPlayerEntity target, Optional<String> suggestion) {
+    private void vouch$notifyBlocked(ServerPlayer target, Optional<String> suggestion) {
         MinecraftServer server = target.getServer();
         if (server == null) {
             return;
         }
         server.execute(() -> {
-            if (target.isDisconnected()) {
+            if (target.hasDisconnected()) {
                 return;
             }
-            Text message = Messages.commandBlocked();
+            Component message = Messages.commandBlocked();
             if (suggestion.isPresent()) {
-                message = Text.empty()
+                message = Component.empty()
                         .append(message)
-                        .append(Text.literal(" /" + suggestion.get()).formatted(Formatting.GRAY));
+                        .append(Component.literal(" /" + suggestion.get()).withStyle(ChatFormatting.GRAY));
             }
-            target.sendMessage(message, false);
+            target.displayClientMessage(message, false);
         });
     }
 }

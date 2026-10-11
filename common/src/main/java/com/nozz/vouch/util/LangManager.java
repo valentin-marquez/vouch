@@ -4,10 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.nozz.vouch.config.VouchConfigManager;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +15,10 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 
 /**
  * Language/localization manager for Vouch.
@@ -307,7 +307,7 @@ public final class LangManager {
      * @param placeholders Key-value pairs for substitution
      * @return Formatted Text component with colors
      */
-    public Text getText(String key, Object... placeholders) {
+    public Component getText(String key, Object... placeholders) {
         String message = get(key, placeholders);
         return parseColorCodes(message);
     }
@@ -315,7 +315,7 @@ public final class LangManager {
     /**
      * Get a message with prefix prepended.
      */
-    public Text getTextWithPrefix(String key, Object... placeholders) {
+    public Component getTextWithPrefix(String key, Object... placeholders) {
         String prefix = VouchConfigManager.getInstance().getBrandingPrefix();
         String message = get(key, placeholders);
         return parseColorCodes(prefix + message);
@@ -341,15 +341,15 @@ public final class LangManager {
     /**
      * Parse Minecraft color codes (&a, &c, etc.) into a Text component.
      */
-    public static Text parseColorCodes(String message) {
+    public static Component parseColorCodes(String message) {
         if (message == null || message.isEmpty()) {
-            return Text.empty();
+            return Component.empty();
         }
         
-        MutableText result = Text.empty();
+        MutableComponent result = Component.empty();
         String[] parts = message.split("(?=&[0-9a-fk-or])|(?<=&[0-9a-fk-or])");
         
-        Formatting currentFormat = null;
+        ChatFormatting currentFormat = null;
         boolean bold = false, italic = false, underline = false, strikethrough = false, obfuscated = false;
         
         for (int i = 0; i < parts.length; i++) {
@@ -359,22 +359,22 @@ public final class LangManager {
                 char code = part.charAt(1);
                 
                 switch (code) {
-                    case '0' -> currentFormat = Formatting.BLACK;
-                    case '1' -> currentFormat = Formatting.DARK_BLUE;
-                    case '2' -> currentFormat = Formatting.DARK_GREEN;
-                    case '3' -> currentFormat = Formatting.DARK_AQUA;
-                    case '4' -> currentFormat = Formatting.DARK_RED;
-                    case '5' -> currentFormat = Formatting.DARK_PURPLE;
-                    case '6' -> currentFormat = Formatting.GOLD;
-                    case '7' -> currentFormat = Formatting.GRAY;
-                    case '8' -> currentFormat = Formatting.DARK_GRAY;
-                    case '9' -> currentFormat = Formatting.BLUE;
-                    case 'a' -> currentFormat = Formatting.GREEN;
-                    case 'b' -> currentFormat = Formatting.AQUA;
-                    case 'c' -> currentFormat = Formatting.RED;
-                    case 'd' -> currentFormat = Formatting.LIGHT_PURPLE;
-                    case 'e' -> currentFormat = Formatting.YELLOW;
-                    case 'f' -> currentFormat = Formatting.WHITE;
+                    case '0' -> currentFormat = ChatFormatting.BLACK;
+                    case '1' -> currentFormat = ChatFormatting.DARK_BLUE;
+                    case '2' -> currentFormat = ChatFormatting.DARK_GREEN;
+                    case '3' -> currentFormat = ChatFormatting.DARK_AQUA;
+                    case '4' -> currentFormat = ChatFormatting.DARK_RED;
+                    case '5' -> currentFormat = ChatFormatting.DARK_PURPLE;
+                    case '6' -> currentFormat = ChatFormatting.GOLD;
+                    case '7' -> currentFormat = ChatFormatting.GRAY;
+                    case '8' -> currentFormat = ChatFormatting.DARK_GRAY;
+                    case '9' -> currentFormat = ChatFormatting.BLUE;
+                    case 'a' -> currentFormat = ChatFormatting.GREEN;
+                    case 'b' -> currentFormat = ChatFormatting.AQUA;
+                    case 'c' -> currentFormat = ChatFormatting.RED;
+                    case 'd' -> currentFormat = ChatFormatting.LIGHT_PURPLE;
+                    case 'e' -> currentFormat = ChatFormatting.YELLOW;
+                    case 'f' -> currentFormat = ChatFormatting.WHITE;
                     case 'k' -> obfuscated = true;
                     case 'l' -> bold = true;
                     case 'm' -> strikethrough = true;
@@ -386,7 +386,7 @@ public final class LangManager {
                     }
                 }
             } else if (!part.isEmpty()) {
-                MutableText textPart = Text.literal(part);
+                MutableComponent textPart = Component.literal(part);
                 
                 Style style = Style.EMPTY;
                 if (currentFormat != null) {
@@ -394,7 +394,7 @@ public final class LangManager {
                 }
                 if (bold) style = style.withBold(true);
                 if (italic) style = style.withItalic(true);
-                if (underline) style = style.withUnderline(true);
+                if (underline) style = style.withUnderlined(true);
                 if (strikethrough) style = style.withStrikethrough(true);
                 if (obfuscated) style = style.withObfuscated(true);
                 

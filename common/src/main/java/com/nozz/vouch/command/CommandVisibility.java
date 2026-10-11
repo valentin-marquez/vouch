@@ -3,9 +3,9 @@ package com.nozz.vouch.command;
 import com.nozz.vouch.auth.AuthManager;
 import com.nozz.vouch.auth.PlayerSession;
 import com.nozz.vouch.util.PermissionHelper;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ import java.util.function.Predicate;
  * and no {@code /logout} until something resends. The predicates are still enforced
  * server-side, so a stale tree is not a security hole — it is a client that is
  * simply wrong about what exists, which is the most confusing kind of wrong. Every
- * transition therefore calls {@link #resend(ServerPlayerEntity)}: joining, being
+ * transition therefore calls {@link #resend(ServerPlayer)}: joining, being
  * jailed, logging in, restoring a session, premium auto-login, completing a second
  * factor, enabling or disabling 2FA, registering, and logging out.
  */
@@ -42,13 +42,13 @@ public final class CommandVisibility {
      * is evaluated for every node on every tree send and before every execution, so
      * it must never touch the database.
      */
-    public static PlayerAuthState stateOf(ServerPlayerEntity player) {
+    public static PlayerAuthState stateOf(ServerPlayer player) {
         AuthManager auth = AuthManager.getInstance();
         if (auth.isAuthenticated(player)) {
             return PlayerAuthState.AUTHENTICATED;
         }
 
-        PlayerSession session = auth.getSession(player.getUuid());
+        PlayerSession session = auth.getSession(player.getUUID());
         // A 2FA-only registration has no account yet (it is created when the first code
         // verifies), so the only thing marking the player as owing a code is the pending
         // setup on the session. Without this /2fa verify is hidden and refused.
@@ -70,8 +70,8 @@ public final class CommandVisibility {
      * <p>Kept on the session and refreshed wherever the database is asked, precisely
      * so this lookup is free.
      */
-    public static boolean twoFactorEnabled(ServerPlayerEntity player) {
-        PlayerSession session = AuthManager.getInstance().getSession(player.getUuid());
+    public static boolean twoFactorEnabled(ServerPlayer player) {
+        PlayerSession session = AuthManager.getInstance().getSession(player.getUUID());
         return session != null && session.has2FAEnabled();
     }
 
@@ -84,15 +84,15 @@ public final class CommandVisibility {
      * {@code CommandGate} to them would make {@code /vouch admin reload} unusable
      * from the console, since the console can never be "authenticated".
      */
-    public static Predicate<ServerCommandSource> requirementFor(VouchCommand command) {
+    public static Predicate<CommandSourceStack> requirementFor(VouchCommand command) {
         return source -> {
             if (!hasPermissionFor(command, source)) {
                 return false;
             }
-            if (!source.isExecutedByPlayer()) {
+            if (!source.isPlayer()) {
                 return isAvailableToConsole(command);
             }
-            ServerPlayerEntity player = source.getPlayer();
+            ServerPlayer player = source.getPlayer();
             if (player == null) {
                 return false;
             }
@@ -101,8 +101,8 @@ public final class CommandVisibility {
     }
 
     /** Push the current tree to one player. Safe to call for a player already gone. */
-    public static void resend(ServerPlayerEntity player) {
-        if (player == null || player.isDisconnected()) {
+    public static void resend(ServerPlayer player) {
+        if (player == null || player.hasDisconnected()) {
             return;
         }
         MinecraftServer server = player.getServer();
@@ -112,11 +112,11 @@ public final class CommandVisibility {
         // The tree is rebuilt per player from the predicates, so this has to happen on
         // the server thread; every caller is already there.
         server.execute(() -> {
-            if (player.isDisconnected()) {
+            if (player.hasDisconnected()) {
                 return;
             }
             try {
-                server.getCommandManager().sendCommandTree(player);
+                server.getCommands().sendCommands(player);
             } catch (RuntimeException e) {
                 // Cosmetic if it fails: the predicates still enforce server-side.
                 LOGGER.warn("Could not resend the command tree to {}",
@@ -125,7 +125,7 @@ public final class CommandVisibility {
         });
     }
 
-    private static boolean hasPermissionFor(VouchCommand command, ServerCommandSource source) {
+    private static boolean hasPermissionFor(VouchCommand command, CommandSourceStack source) {
         return switch (command) {
             case REGISTER -> PermissionHelper.hasUserPermission(source, PermissionHelper.Nodes.REGISTER);
             case LOGIN -> PermissionHelper.hasUserPermission(source, PermissionHelper.Nodes.LOGIN);

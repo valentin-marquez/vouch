@@ -7,14 +7,14 @@ import com.nozz.vouch.db.DatabaseManager;
 import com.nozz.vouch.db.PremiumOverrideStatus;
 import com.nozz.vouch.util.PremiumVerifier;
 import com.nozz.vouch.util.PremiumVerifier.PremiumLookup;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.DisconnectionInfo;
-import net.minecraft.network.packet.c2s.login.LoginHelloC2SPacket;
-import net.minecraft.network.packet.c2s.login.LoginKeyC2SPacket;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.Connection;
+import net.minecraft.network.DisconnectionDetails;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.login.ServerboundHelloPacket;
+import net.minecraft.network.protocol.login.ServerboundKeyPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerLoginNetworkHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.Uuids;
+import net.minecraft.server.network.ServerLoginPacketListenerImpl;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * Both injected handlers run on a netty event loop that is shared by every
  * connection on the server, so nothing here may block. All the decision-making
  * lives in {@link MixedModeLoginHandler} and {@link PremiumVerifier} and comes
- * back as a future; this class only dispatches the answer. {@code startVerify}
+ * back as a future; this class only dispatches the answer. {@code startClientVerification}
  * is called from the continuation, off the event loop, which is where vanilla
  * calls it from too (its {@code "User Authenticator #n"} thread); disconnects
  * are handed to the server thread, as vanilla's own login timeout does.
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  * cracked population joining through an outage can set
  * {@code premium_offline_by_default}, which skips the Mojang lookup entirely.
  */
-@Mixin(ServerLoginNetworkHandler.class)
+@Mixin(ServerLoginPacketListenerImpl.class)
 public abstract class ServerLoginNetworkHandlerMixin {
 
     /**
@@ -70,13 +70,13 @@ public abstract class ServerLoginNetworkHandlerMixin {
 
     @Shadow
     @Final
-    ClientConnection connection;
+    Connection connection;
 
     @Shadow
-    String profileName;
+    String requestedUsername;
 
     @Shadow
-    abstract void startVerify(GameProfile profile);
+    abstract void startClientVerification(GameProfile profile);
 
     @Shadow
     @Final
@@ -105,10 +105,10 @@ public abstract class ServerLoginNetworkHandlerMixin {
      * Decide, before the login proper, whether this username should be made to
      * prove it owns a Mojang account.
      */
-    @Inject(method = "onHello", at = @At("HEAD"), cancellable = true)
-    private void vouch$onHello(LoginHelloC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleHello", at = @At("HEAD"), cancellable = true)
+    private void vouch$onHello(ServerboundHelloPacket packet, CallbackInfo ci) {
         // Online-mode servers already do all of this; leave them alone.
-        if (server.isOnlineMode()) {
+        if (server.usesAuthentication()) {
             return;
         }
 
@@ -137,7 +137,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
         // check-then-set cannot interleave with itself.
         if (vouch$helloHandled) {
             ci.cancel();
-            LOGGER.warn("Ignoring repeated hello packet from {}", connection.getAddress());
+            LOGGER.warn("Ignoring repeated hello packet from {}", connection.getRemoteAddress());
             vouch$disconnect(vouch$unexpectedHello());
             return;
         }
@@ -145,7 +145,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
 
         // From here on the login is ours.
         ci.cancel();
-        this.profileName = username;
+        this.requestedUsername = username;
 
         vouch$decidePremium(config, username)
                 .orTimeout(VOUCH$HELLO_DEADLINE_MILLIS, TimeUnit.MILLISECONDS)
@@ -184,7 +184,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
 
     @Unique
     private void vouch$applyHelloDecision(String username, PremiumLookup outcome) {
-        if (!connection.isOpen()) {
+        if (!connection.isConnected()) {
             return;
         }
 
@@ -201,7 +201,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
             }
             case NOT_PREMIUM -> {
                 LOGGER.debug("Username {} is not premium, proceeding with offline login", username);
-                startVerify(Uuids.getOfflinePlayerProfile(username));
+                startClientVerification(UUIDUtil.createOfflineProfile(username));
             }
             case UNAVAILABLE -> {
                 // Never downgrade to an offline profile on an unknown answer:
@@ -215,8 +215,8 @@ public abstract class ServerLoginNetworkHandlerMixin {
     /**
      * Handle the client's answer to the encryption challenge we sent.
      */
-    @Inject(method = "onKey", at = @At("HEAD"), cancellable = true)
-    private void vouch$onKey(LoginKeyC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleKey", at = @At("HEAD"), cancellable = true)
+    private void vouch$onKey(ServerboundKeyPacket packet, CallbackInfo ci) {
         if (!vouch$forcedEncryption) {
             // Not our handshake. Vanilla's own state check rejects a key packet
             // that was never asked for.
@@ -228,12 +228,12 @@ public abstract class ServerLoginNetworkHandlerMixin {
         // then falls through to vanilla, which rejects it.
         vouch$forcedEncryption = false;
 
-        String username = profileName;
+        String username = requestedUsername;
 
         MixedModeLoginHandler.getInstance()
                 .handleEncryptionResponse(connection, packet)
                 .thenAccept(result -> {
-                    if (!connection.isOpen()) {
+                    if (!connection.isConnected()) {
                         return;
                     }
                     switch (result.outcome()) {
@@ -241,7 +241,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
                             GameProfile profile = result.profile().orElseThrow();
                             LOGGER.info("Premium auto-login: {} verified as {} (UUID: {})",
                                     username, profile.getName(), profile.getId());
-                            startVerify(profile);
+                            startClientVerification(profile);
                         }
                         case REJECTED -> {
                             LOGGER.warn("Premium verification failed for {}, disconnecting", username);
@@ -269,31 +269,31 @@ public abstract class ServerLoginNetworkHandlerMixin {
      * and cannot answer — leaves an entry holding an RSA key pair behind. That
      * is remotely triggerable and unbounded.
      */
-    @Inject(method = "onDisconnected", at = @At("HEAD"))
-    private void vouch$onDisconnected(DisconnectionInfo info, CallbackInfo ci) {
+    @Inject(method = "onDisconnect", at = @At("HEAD"))
+    private void vouch$onDisconnected(DisconnectionDetails info, CallbackInfo ci) {
         MixedModeLoginHandler.getInstance().cleanup(connection);
     }
 
     /** Vanilla's own key, so every client already has a translation for it. */
     @Unique
-    private static Text vouch$authFailed() {
-        return Text.translatable("multiplayer.disconnect.unverified_username");
+    private static Component vouch$authFailed() {
+        return Component.translatable("multiplayer.disconnect.unverified_username");
     }
 
     /** Vanilla's own key, so every client already has a translation for it. */
     @Unique
-    private static Text vouch$authUnavailable() {
-        return Text.translatable("multiplayer.disconnect.authservers_down");
+    private static Component vouch$authUnavailable() {
+        return Component.translatable("multiplayer.disconnect.authservers_down");
     }
 
     @Unique
-    private static Text vouch$unexpectedHello() {
-        return Text.literal("Unexpected hello packet");
+    private static Component vouch$unexpectedHello() {
+        return Component.literal("Unexpected hello packet");
     }
 
     @Unique
-    private static Text vouch$serverBusy() {
-        return Text.literal("Too many logins in progress, please try again in a moment.");
+    private static Component vouch$serverBusy() {
+        return Component.literal("Too many logins in progress, please try again in a moment.");
     }
 
     /**
@@ -307,7 +307,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
      * {@code slow_login} timeout disconnects from.
      */
     @Unique
-    private void vouch$disconnect(Text reason) {
-        server.execute(() -> ((ServerLoginNetworkHandler) (Object) this).disconnect(reason));
+    private void vouch$disconnect(Component reason) {
+        server.execute(() -> ((ServerLoginPacketListenerImpl) (Object) this).disconnect(reason));
     }
 }

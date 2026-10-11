@@ -1,8 +1,8 @@
 package com.nozz.vouch.mixin;
 
 import com.nozz.vouch.auth.AuthManager;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,11 +15,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Players cannot move, look around, or change position until authenticated.
  * This is a server-side only restriction.
  */
-@Mixin(ServerPlayerEntity.class)
+@Mixin(ServerPlayer.class)
 public abstract class ServerPlayerEntityMixin {
 
     @Unique
-    private Vec3d vouch$jailPosition;
+    private Vec3 vouch$jailPosition;
 
     @Unique
     private float vouch$jailYaw;
@@ -32,14 +32,14 @@ public abstract class ServerPlayerEntityMixin {
      */
     @Inject(method = "tick", at = @At("HEAD"))
     private void vouch$onTickStart(CallbackInfo ci) {
-        ServerPlayerEntity self = (ServerPlayerEntity) (Object) this;
+        ServerPlayer self = (ServerPlayer) (Object) this;
         
         if (!AuthManager.getInstance().isAuthenticated(self)) {
             // Capture initial jail position if not set
             if (vouch$jailPosition == null) {
-                vouch$jailPosition = self.getPos();
-                vouch$jailYaw = self.getYaw();
-                vouch$jailPitch = self.getPitch();
+                vouch$jailPosition = self.position();
+                vouch$jailYaw = self.getYRot();
+                vouch$jailPitch = self.getXRot();
             }
         } else {
             // Clear jail position once authenticated
@@ -52,31 +52,31 @@ public abstract class ServerPlayerEntityMixin {
      */
     @Inject(method = "tick", at = @At("TAIL"))
     private void vouch$onTickEnd(CallbackInfo ci) {
-        ServerPlayerEntity self = (ServerPlayerEntity) (Object) this;
+        ServerPlayer self = (ServerPlayer) (Object) this;
         
         if (!AuthManager.getInstance().isAuthenticated(self) && vouch$jailPosition != null) {
             // Teleport back to jail position using requestTeleport
-            self.requestTeleport(
+            self.teleportTo(
                 vouch$jailPosition.x,
                 vouch$jailPosition.y,
                 vouch$jailPosition.z
             );
             
             // Reset head rotation
-            self.setYaw(vouch$jailYaw);
-            self.setPitch(vouch$jailPitch);
+            self.setYRot(vouch$jailYaw);
+            self.setXRot(vouch$jailPitch);
             
             // Cancel any velocity
-            self.setVelocity(Vec3d.ZERO);
+            self.setDeltaMovement(Vec3.ZERO);
         }
     }
 
     /**
      * Block player movement packets by resetting position on move
      */
-    @Inject(method = "playerTick", at = @At("HEAD"))
+    @Inject(method = "doTick", at = @At("HEAD"))
     private void vouch$onPlayerTick(CallbackInfo ci) {
-        ServerPlayerEntity self = (ServerPlayerEntity) (Object) this;
+        ServerPlayer self = (ServerPlayer) (Object) this;
         
         if (!AuthManager.getInstance().isAuthenticated(self) && vouch$jailPosition != null) {
             // Ensure player stays in jail during player-specific tick

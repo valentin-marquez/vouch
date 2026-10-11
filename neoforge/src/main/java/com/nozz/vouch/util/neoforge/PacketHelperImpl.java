@@ -1,7 +1,7 @@
 package com.nozz.vouch.util.neoforge;
 
-import net.minecraft.network.packet.Packet;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * NeoForge implementation of PacketHelper.
@@ -15,7 +15,7 @@ public final class PacketHelperImpl {
     /**
      * Send a packet using NeoForge/Mojang mappings.
      */
-    public static void sendPacket(ServerPlayerEntity player, Packet<?> packet) {
-        player.networkHandler.send(packet);
+    public static void sendPacket(ServerPlayer player, Packet<?> packet) {
+        player.connection.send(packet);
     }
 }

@@ -1,11 +1,10 @@
 package com.nozz.vouch.util;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Uuids;
-
+import net.minecraft.server.level.ServerPlayer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -146,28 +145,28 @@ public final class PermissionHelper {
      * @return true if the source has the permission
      */
     @ExpectPlatform
-    public static boolean hasPermission(ServerCommandSource source, String permission, int defaultOpLevel) {
+    public static boolean hasPermission(CommandSourceStack source, String permission, int defaultOpLevel) {
         throw new AssertionError("Platform implementation not loaded");
     }
 
     /**
      * Check a node using the default OP level declared for it in {@link Nodes}.
      */
-    public static boolean hasPermission(ServerCommandSource source, Node node) {
+    public static boolean hasPermission(CommandSourceStack source, Node node) {
         return hasPermission(source, node.id(), node.defaultOpLevel());
     }
 
     /**
      * Check if a command source has admin permission (OP level 4 default).
      */
-    public static boolean hasAdminPermission(ServerCommandSource source, String permission) {
+    public static boolean hasAdminPermission(CommandSourceStack source, String permission) {
         return hasPermission(source, permission, Defaults.ADMIN_COMMAND);
     }
 
     /**
      * Check if a command source has user-level permission (available to all by default).
      */
-    public static boolean hasUserPermission(ServerCommandSource source, String permission) {
+    public static boolean hasUserPermission(CommandSourceStack source, String permission) {
         return hasPermission(source, permission, Defaults.USER_COMMAND);
     }
 
@@ -183,7 +182,7 @@ public final class PermissionHelper {
      *       level can satisfy — only a real permission provider grant will;</li>
      *   <li>on an offline-mode server the grant is additionally refused unless the
      *       player's identity was cryptographically proven (see
-     *       {@link #isPremiumVerified(ServerPlayerEntity)});</li>
+     *       {@link #isPremiumVerified(ServerPlayer)});</li>
      *   <li>non-player sources (console, command blocks) never "bypass auth".</li>
      * </ol>
      *
@@ -192,13 +191,13 @@ public final class PermissionHelper {
      * must join through Vouch's premium (encrypted) login so they carry their online
      * UUID.
      */
-    public static boolean canBypassAuth(ServerCommandSource source) {
+    public static boolean canBypassAuth(CommandSourceStack source) {
         boolean explicitGrant = hasPermission(source, Nodes.BYPASS_AUTH, Defaults.EXPLICIT_GRANT_ONLY);
 
         MinecraftServer server = source.getServer();
-        boolean serverOnlineMode = server != null && server.isOnlineMode();
+        boolean serverOnlineMode = server != null && server.usesAuthentication();
 
-        ServerPlayerEntity player = source.getPlayer();
+        ServerPlayer player = source.getPlayer();
         boolean premiumVerified = player != null && isPremiumVerified(player);
 
         return resolveBypassAuth(explicitGrant, serverOnlineMode, player != null, premiumVerified);
@@ -237,11 +236,11 @@ public final class PermissionHelper {
      * UUID that is not the offline UUID for the player's own username is proof the
      * handshake succeeded.
      */
-    public static boolean isPremiumVerified(ServerPlayerEntity player) {
+    public static boolean isPremiumVerified(ServerPlayer player) {
         if (player == null) {
             return false;
         }
-        return hasOnlineUuid(player.getUuid(), player.getGameProfile().getName());
+        return hasOnlineUuid(player.getUUID(), player.getGameProfile().getName());
     }
 
     /**
@@ -252,6 +251,6 @@ public final class PermissionHelper {
         if (uuid == null || username == null || username.isEmpty()) {
             return false;
         }
-        return !uuid.equals(Uuids.getOfflinePlayerUuid(username));
+        return !uuid.equals(UUIDUtil.createOfflinePlayerUUID(username));
     }
 }

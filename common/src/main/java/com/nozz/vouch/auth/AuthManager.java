@@ -6,7 +6,6 @@ import com.nozz.vouch.util.PlayerIps;
 import com.nozz.vouch.util.QRMapRenderer;
 import com.nozz.vouch.util.SessionTokenGenerator;
 import com.nozz.vouch.util.UXManager;
-import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Manages player authentication state and sessions.
@@ -40,8 +40,8 @@ public final class AuthManager {
     /**
      * Check if a player is authenticated
      */
-    public boolean isAuthenticated(ServerPlayerEntity player) {
-        return isAuthenticated(player.getUuid());
+    public boolean isAuthenticated(ServerPlayer player) {
+        return isAuthenticated(player.getUUID());
     }
 
     public boolean isAuthenticated(UUID uuid) {
@@ -51,8 +51,8 @@ public final class AuthManager {
     /**
      * Check if a player is in pre-auth jail (waiting to authenticate)
      */
-    public boolean isPendingAuth(ServerPlayerEntity player) {
-        return isPendingAuth(player.getUuid());
+    public boolean isPendingAuth(ServerPlayer player) {
+        return isPendingAuth(player.getUUID());
     }
 
     public boolean isPendingAuth(UUID uuid) {
@@ -63,14 +63,14 @@ public final class AuthManager {
      * Put a player in pre-auth jail.
      * Delegates to PreAuthManager for UX and effects.
      */
-    public void addPendingPlayer(ServerPlayerEntity player, boolean isRegistered) {
-        UUID uuid = player.getUuid();
+    public void addPendingPlayer(ServerPlayer player, boolean isRegistered) {
+        UUID uuid = player.getUUID();
         activeSessions.remove(uuid);
 
         String ip = PlayerIps.of(player).orElse(null);
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         
-        session.setOriginalAllowFlight(player.getAbilities().allowFlying);
+        session.setOriginalAllowFlight(player.getAbilities().mayfly);
         
         pendingSessions.put(uuid, session);
 
@@ -82,15 +82,15 @@ public final class AuthManager {
     /**
      * Put a player in pre-auth jail (legacy method, defaults to unregistered)
      */
-    public void addPendingPlayer(ServerPlayerEntity player) {
+    public void addPendingPlayer(ServerPlayer player) {
         addPendingPlayer(player, false);
     }
 
     /**
      * Authenticate a player and move them from pending to active
      */
-    public void authenticatePlayer(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void authenticatePlayer(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         PlayerSession session = pendingSessions.remove(uuid);
 
         if (session != null) {
@@ -110,8 +110,8 @@ public final class AuthManager {
      * Authenticate a player directly (for session restoration).
      * Used when a valid persistent session is found.
      */
-    public void authenticateFromSession(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void authenticateFromSession(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         String ip = PlayerIps.of(player).orElse(null);
 
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
@@ -125,8 +125,8 @@ public final class AuthManager {
      * Authenticate a player directly as a verified premium account.
      * Creates a persistent session if enabled.
      */
-    public void authenticateAsPremium(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void authenticateAsPremium(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         String ip = PlayerIps.of(player).orElse(null);
 
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
@@ -146,15 +146,15 @@ public final class AuthManager {
      * Put a premium-verified player in pre-auth jail ONLY for 2FA verification.
      * Password check is bypassed; only 2FA code is required.
      */
-    public void addPendingPremiumFor2FA(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void addPendingPremiumFor2FA(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         activeSessions.remove(uuid);
 
         String ip = PlayerIps.of(player).orElse(null);
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         session.setPremiumVerified(true);
         session.setAwaiting2FA(true);
-        session.setOriginalAllowFlight(player.getAbilities().allowFlying);
+        session.setOriginalAllowFlight(player.getAbilities().mayfly);
 
         pendingSessions.put(uuid, session);
 
@@ -167,14 +167,14 @@ public final class AuthManager {
      * A restored session got the player this far, but the account has a second
      * factor and a session is not one. Jails them owing only the code.
      */
-    public void addPendingForSession2FA(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void addPendingForSession2FA(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         activeSessions.remove(uuid);
 
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(),
                 PlayerIps.of(player).orElse(null));
         session.setAwaiting2FA(true);
-        session.setOriginalAllowFlight(player.getAbilities().allowFlying);
+        session.setOriginalAllowFlight(player.getAbilities().mayfly);
 
         pendingSessions.put(uuid, session);
 
@@ -212,8 +212,8 @@ public final class AuthManager {
      * Mark a player as requiring 2FA verification (password passed, awaiting code)
      * Keeps player in pending state but marks they need 2FA
      */
-    public void require2FA(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void require2FA(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         PlayerSession session = pendingSessions.get(uuid);
         
         if (session != null) {
@@ -226,8 +226,8 @@ public final class AuthManager {
      * Complete authentication after 2FA verification
      * Called when player passes both password and 2FA code
      */
-    public void complete2FAAuthentication(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void complete2FAAuthentication(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         PlayerSession session = pendingSessions.get(uuid);
         
         if (session != null && session.isAwaiting2FA()) {
@@ -241,8 +241,8 @@ public final class AuthManager {
      * Remove a player from all tracking (on disconnect)
      * This overload takes the player object to properly cleanup QR maps.
      */
-    public void removePlayer(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void removePlayer(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         
         QRMapRenderer.removeQRMap(player);
         
@@ -309,8 +309,8 @@ public final class AuthManager {
      * @param player The player to logout
      * @return CompletableFuture that completes when logout is done
      */
-    public CompletableFuture<Void> logout(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public CompletableFuture<Void> logout(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         
         pendingSessions.remove(uuid);
         activeSessions.remove(uuid);

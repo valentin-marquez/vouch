@@ -1,15 +1,15 @@
 package com.nozz.vouch.mixin;
 
 import com.nozz.vouch.auth.AuthManager;
-import net.minecraft.network.packet.c2s.play.ButtonClickC2SPacket;
-import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
-import net.minecraft.network.packet.c2s.play.CraftRequestC2SPacket;
-import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
-import net.minecraft.network.packet.c2s.play.PickFromInventoryC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.network.protocol.game.ServerboundContainerButtonClickPacket;
+import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
+import net.minecraft.network.protocol.game.ServerboundPickItemPacket;
+import net.minecraft.network.protocol.game.ServerboundPlaceRecipePacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -33,17 +33,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * {@link AuthManager}'s concurrent maps, and the screen-handler resync — which does
  * touch game state — is marshalled onto the main thread.
  */
-@Mixin(ServerPlayNetworkHandler.class)
+@Mixin(ServerGamePacketListenerImpl.class)
 public abstract class PreAuthInventoryMixin {
 
     @Shadow
-    public ServerPlayerEntity player;
+    public ServerPlayer player;
 
     /**
      * Block inventory/container slot clicks (moving, stacking, dropping via the screen).
      */
-    @Inject(method = "onClickSlot", at = @At("HEAD"), cancellable = true)
-    private void vouch$onClickSlot(ClickSlotC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleContainerClick", at = @At("HEAD"), cancellable = true)
+    private void vouch$onClickSlot(ServerboundContainerClickPacket packet, CallbackInfo ci) {
         if (vouch$denyInventoryAction()) {
             ci.cancel();
         }
@@ -52,8 +52,8 @@ public abstract class PreAuthInventoryMixin {
     /**
      * Block creative-mode slot writes (an item spawn and a drop vector in one packet).
      */
-    @Inject(method = "onCreativeInventoryAction", at = @At("HEAD"), cancellable = true)
-    private void vouch$onCreativeInventoryAction(CreativeInventoryActionC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleSetCreativeModeSlot", at = @At("HEAD"), cancellable = true)
+    private void vouch$onCreativeInventoryAction(ServerboundSetCreativeModeSlotPacket packet, CallbackInfo ci) {
         if (vouch$denyInventoryAction()) {
             ci.cancel();
         }
@@ -62,8 +62,8 @@ public abstract class PreAuthInventoryMixin {
     /**
      * Block recipe-book crafting requests, which fill input slots server-side.
      */
-    @Inject(method = "onCraftRequest", at = @At("HEAD"), cancellable = true)
-    private void vouch$onCraftRequest(CraftRequestC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handlePlaceRecipe", at = @At("HEAD"), cancellable = true)
+    private void vouch$onCraftRequest(ServerboundPlaceRecipePacket packet, CallbackInfo ci) {
         if (vouch$denyInventoryAction()) {
             ci.cancel();
         }
@@ -72,8 +72,8 @@ public abstract class PreAuthInventoryMixin {
     /**
      * Block container buttons (enchanting table, lectern, stonecutter, loom, …).
      */
-    @Inject(method = "onButtonClick", at = @At("HEAD"), cancellable = true)
-    private void vouch$onButtonClick(ButtonClickC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleContainerButtonClick", at = @At("HEAD"), cancellable = true)
+    private void vouch$onButtonClick(ServerboundContainerButtonClickPacket packet, CallbackInfo ci) {
         if (vouch$denyInventoryAction()) {
             ci.cancel();
         }
@@ -82,8 +82,8 @@ public abstract class PreAuthInventoryMixin {
     /**
      * Block creative middle-click pick-block, which writes to the hotbar.
      */
-    @Inject(method = "onPickFromInventory", at = @At("HEAD"), cancellable = true)
-    private void vouch$onPickFromInventory(PickFromInventoryC2SPacket packet, CallbackInfo ci) {
+    @Inject(method = "handlePickItem", at = @At("HEAD"), cancellable = true)
+    private void vouch$onPickFromInventory(ServerboundPickItemPacket packet, CallbackInfo ci) {
         if (vouch$denyInventoryAction()) {
             ci.cancel();
         }
@@ -96,12 +96,12 @@ public abstract class PreAuthInventoryMixin {
      * keep their vanilla path so the client's break prediction stays acknowledged —
      * {@code PlayerInteractionMixin} already refuses the break itself.
      */
-    @Inject(method = "onPlayerAction", at = @At("HEAD"), cancellable = true)
-    private void vouch$onPlayerAction(PlayerActionC2SPacket packet, CallbackInfo ci) {
-        PlayerActionC2SPacket.Action action = packet.getAction();
-        if (action != PlayerActionC2SPacket.Action.DROP_ITEM
-                && action != PlayerActionC2SPacket.Action.DROP_ALL_ITEMS
-                && action != PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND) {
+    @Inject(method = "handlePlayerAction", at = @At("HEAD"), cancellable = true)
+    private void vouch$onPlayerAction(ServerboundPlayerActionPacket packet, CallbackInfo ci) {
+        ServerboundPlayerActionPacket.Action action = packet.getAction();
+        if (action != ServerboundPlayerActionPacket.Action.DROP_ITEM
+                && action != ServerboundPlayerActionPacket.Action.DROP_ALL_ITEMS
+                && action != ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND) {
             return;
         }
         if (vouch$denyInventoryAction()) {
@@ -116,7 +116,7 @@ public abstract class PreAuthInventoryMixin {
      */
     @Unique
     private boolean vouch$denyInventoryAction() {
-        ServerPlayerEntity currentPlayer = this.player;
+        ServerPlayer currentPlayer = this.player;
         if (currentPlayer == null || AuthManager.getInstance().isAuthenticated(currentPlayer)) {
             return false;
         }
@@ -124,8 +124,8 @@ public abstract class PreAuthInventoryMixin {
         MinecraftServer server = currentPlayer.getServer();
         if (server != null) {
             server.execute(() -> {
-                if (!currentPlayer.isDisconnected() && currentPlayer.currentScreenHandler != null) {
-                    currentPlayer.currentScreenHandler.syncState();
+                if (!currentPlayer.hasDisconnected() && currentPlayer.containerMenu != null) {
+                    currentPlayer.containerMenu.sendAllDataToRemote();
                 }
             });
         }

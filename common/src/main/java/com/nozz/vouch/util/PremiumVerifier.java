@@ -2,7 +2,6 @@ package com.nozz.vouch.util;
 
 import com.mojang.authlib.GameProfile;
 import com.nozz.vouch.config.VouchConfigManager;
-import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.LongSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Talks to the Mojang APIs on behalf of the mixed online/offline login flow.
@@ -326,8 +326,8 @@ public final class PremiumVerifier {
      * is the one Mojang issues for that name, not that the client owns the
      * account. It is only safe as a secondary check.
      */
-    public CompletableFuture<Boolean> isPremiumPlayer(ServerPlayerEntity player) {
-        UUID playerUuid = player.getUuid();
+    public CompletableFuture<Boolean> isPremiumPlayer(ServerPlayer player) {
+        UUID playerUuid = player.getUUID();
         String username = player.getName().getString();
 
         Optional<Boolean> cached = cache.get(playerUuid);
@@ -470,7 +470,7 @@ public final class PremiumVerifier {
             this.clockMillis = clockMillis;
             this.entries = new LinkedHashMap<>(16, 0.75f, true) {
                 @Override
-                protected boolean removeEldestEntry(Map.Entry<K, Entry<V>> eldest) {
+                protected boolean removeEldestEntry(Map.Entry<K, com.nozz.vouch.util.PremiumVerifier.BoundedTtlCache.Entry<V>> eldest) {
                     return size() > maxEntries;
                 }
             };

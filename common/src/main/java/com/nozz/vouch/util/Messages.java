@@ -1,9 +1,9 @@
 package com.nozz.vouch.util;
 
 import com.nozz.vouch.config.VouchConfigManager;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 
 /**
  * Centralized message provider for Vouch.
@@ -31,266 +31,266 @@ public final class Messages {
     /**
      * Create a prefixed text message from lang key.
      */
-    private static Text prefixed(String key, Object... placeholders) {
+    private static Component prefixed(String key, Object... placeholders) {
         return LangManager.getInstance().getTextWithPrefix(key, placeholders);
     }
 
     /**
      * Create a text message without prefix from lang key.
      */
-    private static Text text(String key, Object... placeholders) {
+    private static Component text(String key, Object... placeholders) {
         return LangManager.getInstance().getText(key, placeholders);
     }
 
-    public static Text welcomeUnregistered() {
+    public static Component welcomeUnregistered() {
         return prefixed("vouch.auth.welcome.unregistered");
     }
 
-    public static Text welcomeRegistered() {
+    public static Component welcomeRegistered() {
         return prefixed("vouch.auth.welcome.registered");
     }
 
-    public static Text welcome2FAOnly() {
+    public static Component welcome2FAOnly() {
         return prefixed("vouch.auth.welcome.2fa_only");
     }
 
-    public static Text welcome2FAOnlyRegistered() {
+    public static Component welcome2FAOnlyRegistered() {
         return prefixed("vouch.auth.welcome.2fa_only.registered");
     }
 
-    public static Text registerSuccess() {
+    public static Component registerSuccess() {
         return prefixed("vouch.auth.register.success");
     }
 
-    public static Text registerSuccess2FA() {
+    public static Component registerSuccess2FA() {
         return prefixed("vouch.auth.register.success_2fa");
     }
 
-    public static Text loginSuccess() {
+    public static Component loginSuccess() {
         return prefixed("vouch.auth.login.success");
     }
 
-    public static Text alreadyLoggedIn() {
+    public static Component alreadyLoggedIn() {
         return prefixed("vouch.auth.already_logged_in");
     }
 
-    public static Text alreadyRegistered() {
+    public static Component alreadyRegistered() {
         return prefixed("vouch.auth.register.already_registered");
     }
 
-    public static Text notRegistered() {
+    public static Component notRegistered() {
         return prefixed("vouch.auth.not_registered");
     }
 
-    public static Text passwordMismatch() {
+    public static Component passwordMismatch() {
         return prefixed("vouch.auth.register.password_mismatch");
     }
 
-    public static Text wrongPassword() {
+    public static Component wrongPassword() {
         return prefixed("vouch.auth.login.wrong_password");
     }
 
-    public static Text tooManyAttempts() {
+    public static Component tooManyAttempts() {
         return prefixed("vouch.auth.login.too_many_attempts");
     }
 
-    public static Text lockedOut(int seconds) {
+    public static Component lockedOut(int seconds) {
         return prefixed("vouch.auth.login.locked_out", "time", seconds);
     }
 
-    public static Text passwordTooShort(int minLength) {
+    public static Component passwordTooShort(int minLength) {
         return prefixed("vouch.auth.register.password_too_short", "min", minLength);
     }
 
-    public static Text passwordTooLong(int maxLength) {
+    public static Component passwordTooLong(int maxLength) {
         return prefixed("vouch.auth.register.password_too_long", "max", maxLength);
     }
 
-    public static Text authTimeout() {
+    public static Component authTimeout() {
         return text("vouch.auth.timeout");
     }
 
-    public static Text chatBlocked() {
+    public static Component chatBlocked() {
         return prefixed("vouch.jail.chat_blocked");
     }
 
-    public static Text actionBlocked() {
+    public static Component actionBlocked() {
         return prefixed("vouch.jail.action_blocked");
     }
 
-    public static Text commandBlocked() {
+    public static Component commandBlocked() {
         return prefixed("vouch.jail.command_blocked");
     }
 
-    public static Text playerUnregistered(String playerName) {
+    public static Component playerUnregistered(String playerName) {
         return prefixed("vouch.admin.player_unregistered", "player", playerName);
     }
 
-    public static Text playerNotFound(String playerName) {
+    public static Component playerNotFound(String playerName) {
         return prefixed("vouch.admin.player_not_found", "player", playerName);
     }
 
-    public static Text player2FAReset(String playerName) {
+    public static Component player2FAReset(String playerName) {
         return prefixed("vouch.admin.player_2fa_reset", "player", playerName);
     }
 
-    public static Text configReloaded() {
+    public static Component configReloaded() {
         return prefixed("vouch.admin.config_reloaded");
     }
 
-    public static Text langExported(String path) {
+    public static Component langExported(String path) {
         return prefixed("vouch.admin.lang_exported", "path", path);
     }
 
-    public static Text databaseError() {
+    public static Component databaseError() {
         return prefixed("vouch.admin.database_error");
     }
 
-    public static Text noPermission() {
+    public static Component noPermission() {
         return prefixed("vouch.admin.no_permission");
     }
 
-    public static Text twoFactorRequired() {
+    public static Component twoFactorRequired() {
         return prefixed("vouch.2fa.required");
     }
 
-    public static Text twoFactorSetupInstructions() {
+    public static Component twoFactorSetupInstructions() {
         return prefixed("vouch.2fa.setup.instructions");
     }
 
-    public static Text twoFactorManualSecret(String secret) {
+    public static Component twoFactorManualSecret(String secret) {
         return prefixed("vouch.2fa.setup.manual_secret", "secret", secret);
     }
 
-    public static Text twoFactorEnabled() {
+    public static Component twoFactorEnabled() {
         return prefixed("vouch.2fa.enabled");
     }
 
-    public static Text twoFactorDisabled() {
+    public static Component twoFactorDisabled() {
         return prefixed("vouch.2fa.disabled");
     }
 
-    public static Text twoFactorInvalidCode() {
+    public static Component twoFactorInvalidCode() {
         return prefixed("vouch.2fa.invalid_code");
     }
 
-    public static Text twoFactorAlreadyEnabled() {
+    public static Component twoFactorAlreadyEnabled() {
         return prefixed("vouch.2fa.already_enabled");
     }
 
-    public static Text twoFactorNotEnabled() {
+    public static Component twoFactorNotEnabled() {
         return prefixed("vouch.2fa.not_enabled");
     }
 
-    public static Text twoFactorSetupFailed() {
+    public static Component twoFactorSetupFailed() {
         return prefixed("vouch.2fa.setup.failed");
     }
 
-    public static Text twoFactorNothingPending() {
+    public static Component twoFactorNothingPending() {
         return prefixed("vouch.2fa.nothing_pending");
     }
 
-    public static Text twoFactorStatusEnabled() {
+    public static Component twoFactorStatusEnabled() {
         return prefixed("vouch.2fa.status.enabled");
     }
 
-    public static Text twoFactorStatusDisabled() {
+    public static Component twoFactorStatusDisabled() {
         return prefixed("vouch.2fa.status.disabled");
     }
 
-    public static Text mustLoginFirst() {
+    public static Component mustLoginFirst() {
         return prefixed("vouch.2fa.must_login_first");
     }
 
-    public static Text twoFactorRequiredForOps() {
+    public static Component twoFactorRequiredForOps() {
         return prefixed("vouch.2fa.required_for_ops");
     }
 
-    public static Text sessionExpired() {
+    public static Component sessionExpired() {
         return prefixed("vouch.auth.session_expired");
     }
 
-    public static Text sessionRestored() {
+    public static Component sessionRestored() {
         return prefixed("vouch.auth.session_restored");
     }
 
-    public static Text logoutSuccess() {
+    public static Component logoutSuccess() {
         return prefixed("vouch.auth.logout.success");
     }
 
-    public static Text logoutKick() {
+    public static Component logoutKick() {
         return text("vouch.auth.logout.kick");
     }
 
-    public static Text processing() {
+    public static Component processing() {
         return prefixed("vouch.jail.processing");
     }
 
-    public static Text usageRegister() {
+    public static Component usageRegister() {
         return text("vouch.command.usage.register");
     }
 
-    public static Text usageRegister2FA() {
+    public static Component usageRegister2FA() {
         return text("vouch.command.usage.register_2fa");
     }
 
-    public static Text usageLogin() {
+    public static Component usageLogin() {
         return text("vouch.command.usage.login");
     }
 
-    public static Text usageLogin2FA() {
+    public static Component usageLogin2FA() {
         return text("vouch.command.usage.login_2fa");
     }
 
-    public static Text usage2FAVerify() {
+    public static Component usage2FAVerify() {
         return text("vouch.command.usage.2fa_verify");
     }
 
-    public static Text usage2FADisable() {
+    public static Component usage2FADisable() {
         return text("vouch.command.usage.2fa_disable");
     }
 
-    public static Text disabled2FA() {
+    public static Component disabled2FA() {
         return prefixed("vouch.command.disabled.2fa");
     }
 
-    public static Text disabledPassword() {
+    public static Component disabledPassword() {
         return prefixed("vouch.command.disabled.password");
     }
 
-    public static Text internalError() {
+    public static Component internalError() {
         return prefixed("vouch.error.internal");
     }
 
-    public static Text databaseConnectionError() {
+    public static Component databaseConnectionError() {
         return prefixed("vouch.error.database");
     }
 
-    public static Text premiumAutoLogin() {
+    public static Component premiumAutoLogin() {
         return prefixed("vouch.auth.premium.auto_login");
     }
 
-    public static Text premiumRequire2FA() {
+    public static Component premiumRequire2FA() {
         return prefixed("vouch.auth.premium.require_2fa");
     }
 
-    public static Text premiumForcedOffline(String playerName) {
+    public static Component premiumForcedOffline(String playerName) {
         return prefixed("vouch.admin.premium.forced_offline", "player", playerName);
     }
 
-    public static Text premiumForcedOnline(String playerName) {
+    public static Component premiumForcedOnline(String playerName) {
         return prefixed("vouch.admin.premium.forced_online", "player", playerName);
     }
 
-    public static Text premiumMarkedOnline() {
+    public static Component premiumMarkedOnline() {
         return prefixed("vouch.command.premium.marked_online");
     }
 
-    public static Text premiumMarkedOnlineNotPremium() {
+    public static Component premiumMarkedOnlineNotPremium() {
         return prefixed("vouch.command.premium.not_premium");
     }
 
-    public static Text premiumAlreadyMarkedOnline() {
+    public static Component premiumAlreadyMarkedOnline() {
         return prefixed("vouch.command.premium.already_marked");
     }
 
@@ -316,12 +316,12 @@ public final class Messages {
      * @param message   the message to decorate
      * @param command   what to put in the player's chat box, leading slash included
      */
-    public static Text suggesting(Text message, String command) {
+    public static Component suggesting(Component message, String command) {
         if (message == null || command == null || command.isBlank()) {
             return message;
         }
-        Text hover = LangManager.getInstance().getText(ChatSuggestion.HOVER_KEY, "command", command);
-        return message.copy().styled(style -> style
+        Component hover = LangManager.getInstance().getText(ChatSuggestion.HOVER_KEY, "command", command);
+        return message.copy().withStyle(style -> style
                 .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
     }
@@ -330,83 +330,83 @@ public final class Messages {
      * Render one entry of the {@link ChatSuggestion} table: its message, carrying its
      * command as a click-to-fill suggestion.
      */
-    public static Text suggesting(ChatSuggestion suggestion) {
+    public static Component suggesting(ChatSuggestion suggestion) {
         return suggesting(prefixed(suggestion.langKey()), suggestion.command());
     }
 
     // ==================== Prompts that suggest their own next step ====================
 
     /** "You are not registered" — clicking offers {@code /register}. */
-    public static Text notRegisteredClickable() {
+    public static Component notRegisteredClickable() {
         return suggesting(ChatSuggestion.NOT_REGISTERED);
     }
 
     /** "Log in first" — clicking offers {@code /login}. */
-    public static Text mustLoginFirstClickable() {
+    public static Component mustLoginFirstClickable() {
         return suggesting(ChatSuggestion.MUST_LOGIN_FIRST);
     }
 
     /** "Second factor required" — clicking offers {@code /2fa verify}. */
-    public static Text twoFactorRequiredClickable() {
+    public static Component twoFactorRequiredClickable() {
         return suggesting(ChatSuggestion.TWO_FACTOR_REQUIRED);
     }
 
     /** "2FA is off" — clicking offers {@code /vouch 2fa setup}. */
-    public static Text twoFactorStatusDisabledClickable() {
+    public static Component twoFactorStatusDisabledClickable() {
         return suggesting(ChatSuggestion.TWO_FACTOR_STATUS_DISABLED);
     }
 
     /** The setup instructions, with the verify command one click away. */
-    public static Text twoFactorSetupInstructionsClickable() {
+    public static Component twoFactorSetupInstructionsClickable() {
         return suggesting(ChatSuggestion.TWO_FACTOR_SETUP_INSTRUCTIONS);
     }
 
     /** Operators told to configure 2FA get the command that does it. */
-    public static Text twoFactorRequiredForOpsClickable() {
+    public static Component twoFactorRequiredForOpsClickable() {
         return suggesting(ChatSuggestion.TWO_FACTOR_REQUIRED_FOR_OPS);
     }
 
     // ==================== Password changes ====================
 
-    public static Text passwordChanged() {
+    public static Component passwordChanged() {
         return prefixed("vouch.auth.password.changed");
     }
 
-    public static Text passwordWrongCurrent() {
+    public static Component passwordWrongCurrent() {
         return prefixed("vouch.auth.password.wrong_current");
     }
 
-    public static Text passwordUnchanged() {
+    public static Component passwordUnchanged() {
         return prefixed("vouch.auth.password.unchanged");
     }
 
-    public static Text passwordResetFor(String playerName) {
+    public static Component passwordResetFor(String playerName) {
         return prefixed("vouch.admin.user.password_reset", "player", playerName);
     }
 
     // ==================== Account info ====================
 
-    public static Text userInfoHeader(String playerName) {
+    public static Component userInfoHeader(String playerName) {
         return prefixed("vouch.admin.user.info.header", "player", playerName);
     }
 
-    public static Text userInfoUuid(String uuid) {
+    public static Component userInfoUuid(String uuid) {
         return text("vouch.admin.user.info.uuid", "value", uuid);
     }
 
-    public static Text userInfoTwoFactor(String value) {
+    public static Component userInfoTwoFactor(String value) {
         return text("vouch.admin.user.info.2fa", "value", value);
     }
 
-    public static Text userInfoLastLogin(String value) {
+    public static Component userInfoLastLogin(String value) {
         return text("vouch.admin.user.info.last_login", "value", value);
     }
 
-    public static Text userInfoLastIp(String value) {
+    public static Component userInfoLastIp(String value) {
         return text("vouch.admin.user.info.last_ip", "value", value);
     }
 
-    public static Text userInfoPremium(String value) {
+    public static Component userInfoPremium(String value) {
         return text("vouch.admin.user.info.premium", "value", value);
     }
 

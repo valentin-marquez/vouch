@@ -5,11 +5,6 @@ import com.nozz.vouch.config.VouchConfigManager;
 import com.nozz.vouch.util.Messages;
 import com.nozz.vouch.util.QRMapRenderer;
 import com.nozz.vouch.util.UXManager;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 
 /**
  * Manages pre-authentication state for players.
@@ -59,8 +60,8 @@ public final class PreAuthManager {
      * Applies effects and starts countdown.
      */
     @SuppressWarnings("unused")
-    public void startPreAuth(ServerPlayerEntity player, PlayerSession session, boolean isRegistered) {
-        UUID uuid = player.getUuid();
+    public void startPreAuth(ServerPlayer player, PlayerSession session, boolean isRegistered) {
+        UUID uuid = player.getUUID();
         VouchConfigManager config = VouchConfigManager.getInstance();
         UXManager ux = UXManager.getInstance();
 
@@ -70,7 +71,7 @@ public final class PreAuthManager {
         if (config.freezePosition()) {
             session.setJailPosition(
                 player.getX(), player.getY(), player.getZ(),
-                player.getYaw(), player.getPitch()
+                player.getYRot(), player.getXRot()
             );
         }
 
@@ -81,8 +82,8 @@ public final class PreAuthManager {
         }
 
         if (config.hideFromOthers()) {
-            player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.INVISIBILITY, -1, 0, false, false, false
+            player.addEffect(new MobEffectInstance(
+                MobEffects.INVISIBILITY, -1, 0, false, false, false
             ));
         }
 
@@ -103,45 +104,45 @@ public final class PreAuthManager {
     /**
      * Apply pre-auth status effects
      */
-    private void applyPreAuthEffects(ServerPlayerEntity player) {
+    private void applyPreAuthEffects(ServerPlayer player) {
         VouchConfigManager config = VouchConfigManager.getInstance();
 
         // Blindness
         if (config.getBlindnessLevel() > 0) {
-            player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.BLINDNESS, -1, config.getBlindnessLevel() - 1, 
+            player.addEffect(new MobEffectInstance(
+                MobEffects.BLINDNESS, -1, config.getBlindnessLevel() - 1, 
                 false, false, false
             ));
         }
 
         // Slowness
         if (config.getSlownessLevel() > 0) {
-            player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.SLOWNESS, -1, config.getSlownessLevel() - 1, 
+            player.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SLOWDOWN, -1, config.getSlownessLevel() - 1, 
                 false, false, false
             ));
         }
 
         // Prevent fly kick by allowing flight temporarily
-        PlayerSession session = AuthManager.getInstance().getSession(player.getUuid());
+        PlayerSession session = AuthManager.getInstance().getSession(player.getUUID());
         if (session != null) {
-            session.setOriginalAllowFlight(player.getAbilities().allowFlying);
+            session.setOriginalAllowFlight(player.getAbilities().mayfly);
         }
-        player.getAbilities().allowFlying = true;
-        player.sendAbilitiesUpdate();
+        player.getAbilities().mayfly = true;
+        player.onUpdateAbilities();
     }
 
     /**
      * Hide player from tablist
      */
-    private void hideFromTabList(ServerPlayerEntity player) {
+    private void hideFromTabList(ServerPlayer player) {
         try {
             var server = player.getServer();
             if (server != null) {
-                var packet = new PlayerRemoveS2CPacket(List.of(player.getUuid()));
+                var packet = new ClientboundPlayerInfoRemovePacket(List.of(player.getUUID()));
                 // Send to all other players
-                for (ServerPlayerEntity other : server.getPlayerManager().getPlayerList()) {
-                    if (!other.getUuid().equals(player.getUuid())) {
+                for (ServerPlayer other : server.getPlayerList().getPlayers()) {
+                    if (!other.getUUID().equals(player.getUUID())) {
                         sendPacket(other, packet);
                     }
                 }
@@ -154,12 +155,12 @@ public final class PreAuthManager {
     /**
      * Show player in tablist
      */
-    private void showInTabList(ServerPlayerEntity player) {
+    private void showInTabList(ServerPlayer player) {
         try {
             var server = player.getServer();
             if (server != null) {
-                var packet = new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, player);
-                server.getPlayerManager().sendToAll(packet);
+                var packet = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, player);
+                server.getPlayerList().broadcastAll(packet);
             }
         } catch (Throwable e) {
             LOGGER.warn("Failed to show player in tab list: {}", e.getMessage());
@@ -169,8 +170,8 @@ public final class PreAuthManager {
     /**
      * Start the countdown timer for a player
      */
-    private void startCountdown(ServerPlayerEntity player, int totalSeconds) {
-        UUID uuid = player.getUuid();
+    private void startCountdown(ServerPlayer player, int totalSeconds) {
+        UUID uuid = player.getUUID();
         
         remainingSeconds.put(uuid, totalSeconds);
 
@@ -188,8 +189,8 @@ public final class PreAuthManager {
     /**
      * Tick the countdown for a player (called every second)
      */
-    private void tickCountdown(ServerPlayerEntity player, int totalSeconds) {
-        UUID uuid = player.getUuid();
+    private void tickCountdown(ServerPlayer player, int totalSeconds) {
+        UUID uuid = player.getUUID();
         
 
         if (!player.isAlive() || !AuthManager.getInstance().isPendingAuth(uuid)) {
@@ -226,8 +227,8 @@ public final class PreAuthManager {
     /**
      * Called when countdown reaches zero
      */
-    private void onTimeout(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    private void onTimeout(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         
         cancelCountdown(uuid);
         UXManager.getInstance().playAuthTimeoutSound(player);
@@ -236,7 +237,7 @@ public final class PreAuthManager {
         QRMapRenderer.removeQRMap(player);
 
         // Disconnect player
-        player.networkHandler.disconnect(Messages.authTimeout());
+        player.connection.disconnect(Messages.authTimeout());
         LOGGER.info("Player {} kicked for auth timeout", player.getName().getString());
     }
 
@@ -244,8 +245,8 @@ public final class PreAuthManager {
      * Start pre-auth state for a premium player who only needs 2FA verification.
      * Lighter than full pre-auth: only applies effects and shows 2FA-specific messages.
      */
-    public void startPreAuthPremium2FA(ServerPlayerEntity player, PlayerSession session) {
-        UUID uuid = player.getUuid();
+    public void startPreAuthPremium2FA(ServerPlayer player, PlayerSession session) {
+        UUID uuid = player.getUUID();
         VouchConfigManager config = VouchConfigManager.getInstance();
         UXManager ux = UXManager.getInstance();
 
@@ -254,7 +255,7 @@ public final class PreAuthManager {
         if (config.freezePosition()) {
             session.setJailPosition(
                 player.getX(), player.getY(), player.getZ(),
-                player.getYaw(), player.getPitch()
+                player.getYRot(), player.getXRot()
             );
         }
 
@@ -265,8 +266,8 @@ public final class PreAuthManager {
         }
 
         if (config.hideFromOthers()) {
-            player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.INVISIBILITY, -1, 0, false, false, false
+            player.addEffect(new MobEffectInstance(
+                MobEffects.INVISIBILITY, -1, 0, false, false, false
             ));
         }
 
@@ -281,11 +282,11 @@ public final class PreAuthManager {
     /**
      * Enforce position freeze for a player
      */
-    public void enforcePositionFreeze(ServerPlayerEntity player) {
+    public void enforcePositionFreeze(ServerPlayer player) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         if (!config.freezePosition()) return;
 
-        PlayerSession session = AuthManager.getInstance().getSession(player.getUuid());
+        PlayerSession session = AuthManager.getInstance().getSession(player.getUUID());
         if (session == null || !session.isJailPosSet()) return;
 
         // Teleport back to jail position if moved
@@ -296,7 +297,7 @@ public final class PreAuthManager {
         double distSq = dx * dx + dy * dy + dz * dz;
         if (distSq > 0.1) { // Allow tiny movements
             // Use requestTeleport for smooth teleportation
-            player.requestTeleport(
+            player.teleportTo(
                 session.getJailX(), 
                 session.getJailY(), 
                 session.getJailZ()
@@ -304,8 +305,8 @@ public final class PreAuthManager {
             
             // If camera freeze is enabled, also reset rotation
             if (config.freezeCamera()) {
-                player.setYaw(session.getJailYaw());
-                player.setPitch(session.getJailPitch());
+                player.setYRot(session.getJailYaw());
+                player.setXRot(session.getJailPitch());
             }
         }
     }
@@ -313,8 +314,8 @@ public final class PreAuthManager {
     /**
      * End pre-auth state for a player (on successful auth)
      */
-    public void endPreAuth(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public void endPreAuth(ServerPlayer player) {
+        UUID uuid = player.getUUID();
         VouchConfigManager config = VouchConfigManager.getInstance();
 
         LOGGER.debug("Ending pre-auth for player {}", player.getName().getString());
@@ -323,14 +324,14 @@ public final class PreAuthManager {
 
         QRMapRenderer.removeQRMap(player);
 
-        player.removeStatusEffect(StatusEffects.BLINDNESS);
-        player.removeStatusEffect(StatusEffects.SLOWNESS);
-        player.removeStatusEffect(StatusEffects.INVISIBILITY);
+        player.removeEffect(MobEffects.BLINDNESS);
+        player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        player.removeEffect(MobEffects.INVISIBILITY);
 
         PlayerSession session = AuthManager.getInstance().getSession(uuid);
         if (session != null) {
-            player.getAbilities().allowFlying = session.getOriginalAllowFlight();
-            player.sendAbilitiesUpdate();
+            player.getAbilities().mayfly = session.getOriginalAllowFlight();
+            player.onUpdateAbilities();
         }
 
         if (config.hideFromTabList()) {

@@ -1,7 +1,7 @@
 package com.nozz.vouch.util.fabric;
 
 import me.lucko.fabric.api.permissions.v0.Permissions;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.commands.CommandSourceStack;
 
 /**
  * Fabric implementation of PermissionHelper.
@@ -27,7 +27,7 @@ public final class PermissionHelperImpl {
      * @param defaultOpLevel The OP level to use as fallback
      * @return true if the source has the permission
      */
-    public static boolean hasPermission(ServerCommandSource source, String permission, int defaultOpLevel) {
+    public static boolean hasPermission(CommandSourceStack source, String permission, int defaultOpLevel) {
         return Permissions.check(source, permission, defaultOpLevel);
     }
 }

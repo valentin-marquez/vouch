@@ -1,8 +1,8 @@
 package com.nozz.vouch.util;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-
+import java.net.SocketAddress;
 import java.util.Optional;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Resolves the address a player is connected from.
@@ -19,12 +19,12 @@ public final class PlayerIps {
     }
 
     /** The address of the player's connection, if it can be determined. */
-    public static Optional<String> of(ServerPlayerEntity player) {
+    public static Optional<String> of(ServerPlayer player) {
         try {
-            if (player == null || player.networkHandler == null) {
+            if (player == null || player.connection == null) {
                 return Optional.empty();
             }
-            var address = player.networkHandler.getConnectionAddress();
+            var address = player.connection.getRemoteAddress();
             return address == null ? Optional.empty() : parse(address.toString());
         } catch (Exception e) {
             return Optional.empty();

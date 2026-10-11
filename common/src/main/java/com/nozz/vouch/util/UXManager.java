@@ -1,21 +1,6 @@
 package com.nozz.vouch.util;
 
 import com.nozz.vouch.config.VouchConfigManager;
-import net.minecraft.entity.boss.BossBar;
-import net.minecraft.entity.boss.ServerBossBar;
-import net.minecraft.network.packet.s2c.play.ClearTitleS2CPacket;
-import net.minecraft.network.packet.s2c.play.OverlayMessageS2CPacket;
-import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
-import net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket;
-import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +9,21 @@ import static com.nozz.vouch.util.PacketHelper.sendPacket;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
+import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerBossEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.BossEvent;
 
 /**
  * Manages all user experience elements for Vouch.
@@ -39,7 +39,7 @@ public final class UXManager {
     private static final Logger LOGGER = LoggerFactory.getLogger("Vouch/UX");
 
     private static UXManager instance;
-    private final Map<UUID, ServerBossBar> activeBossBars = new ConcurrentHashMap<>();
+    private final Map<UUID, ServerBossEvent> activeBossBars = new ConcurrentHashMap<>();
 
     private UXManager() {
     }
@@ -54,29 +54,29 @@ public final class UXManager {
     /**
      * Send a title and subtitle to the player
      */
-    public void sendTitle(ServerPlayerEntity player, String title, String subtitle) {
+    public void sendTitle(ServerPlayer player, String title, String subtitle) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         if (!config.useTitles())
             return;
 
-        sendPacket(player, new TitleFadeS2CPacket(
+        sendPacket(player, new ClientboundSetTitlesAnimationPacket(
                 config.getTitleFadeIn(),
                 config.getTitleStay(),
                 config.getTitleFadeOut()));
 
         if (subtitle != null && !subtitle.isEmpty()) {
-            sendPacket(player, new SubtitleS2CPacket(formatText(subtitle)));
+            sendPacket(player, new ClientboundSetSubtitleTextPacket(formatText(subtitle)));
         }
 
         if (title != null && !title.isEmpty()) {
-            sendPacket(player, new TitleS2CPacket(formatText(title)));
+            sendPacket(player, new ClientboundSetTitleTextPacket(formatText(title)));
         }
     }
 
     /**
      * Send the welcome title for unregistered players
      */
-    public void sendWelcomeTitleUnregistered(ServerPlayerEntity player) {
+    public void sendWelcomeTitleUnregistered(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         VouchConfigManager config = VouchConfigManager.getInstance();
 
@@ -92,7 +92,7 @@ public final class UXManager {
     /**
      * Send the welcome title for registered players
      */
-    public void sendWelcomeTitleRegistered(ServerPlayerEntity player) {
+    public void sendWelcomeTitleRegistered(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         VouchConfigManager config = VouchConfigManager.getInstance();
 
@@ -108,7 +108,7 @@ public final class UXManager {
     /**
      * Send login success title
      */
-    public void sendLoginSuccessTitle(ServerPlayerEntity player) {
+    public void sendLoginSuccessTitle(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         sendTitle(player,
                 lang.getRaw("vouch.ui.title.login_success"),
@@ -118,7 +118,7 @@ public final class UXManager {
     /**
      * Send register success title
      */
-    public void sendRegisterSuccessTitle(ServerPlayerEntity player) {
+    public void sendRegisterSuccessTitle(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         sendTitle(player,
                 lang.getRaw("vouch.ui.title.register_success"),
@@ -128,7 +128,7 @@ public final class UXManager {
     /**
      * Send wrong password title (if enabled)
      */
-    public void sendWrongPasswordTitle(ServerPlayerEntity player) {
+    public void sendWrongPasswordTitle(ServerPlayer player) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         if (config.useErrorTitles()) {
             LangManager lang = LangManager.getInstance();
@@ -141,25 +141,25 @@ public final class UXManager {
     /**
      * Clear any active title
      */
-    public void clearTitle(ServerPlayerEntity player) {
-        sendPacket(player, new ClearTitleS2CPacket(true));
+    public void clearTitle(ServerPlayer player) {
+        sendPacket(player, new ClientboundClearTitlesPacket(true));
     }
 
     /**
      * Send an action bar message
      */
-    public void sendActionBar(ServerPlayerEntity player, String message) {
+    public void sendActionBar(ServerPlayer player, String message) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         if (!config.useActionBar())
             return;
 
-        sendPacket(player, new OverlayMessageS2CPacket(formatText(message)));
+        sendPacket(player, new ClientboundSetActionBarTextPacket(formatText(message)));
     }
 
     /**
      * Send the pre-auth action bar with countdown
      */
-    public void sendPreAuthActionBar(ServerPlayerEntity player, int secondsRemaining) {
+    public void sendPreAuthActionBar(ServerPlayer player, int secondsRemaining) {
         LangManager lang = LangManager.getInstance();
         VouchConfigManager config = VouchConfigManager.getInstance();
 
@@ -174,7 +174,7 @@ public final class UXManager {
     /**
      * Send the awaiting 2FA action bar
      */
-    public void sendAwaiting2FAActionBar(ServerPlayerEntity player) {
+    public void sendAwaiting2FAActionBar(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         sendActionBar(player, lang.getRaw("vouch.ui.actionbar.awaiting_2fa"));
     }
@@ -182,7 +182,7 @@ public final class UXManager {
     /**
      * Send rate limited action bar
      */
-    public void sendRateLimitedActionBar(ServerPlayerEntity player, int secondsRemaining) {
+    public void sendRateLimitedActionBar(ServerPlayer player, int secondsRemaining) {
         LangManager lang = LangManager.getInstance();
         String message = lang.get("vouch.ui.actionbar.rate_limited", "time", secondsRemaining);
         sendActionBar(player, message);
@@ -191,21 +191,21 @@ public final class UXManager {
     /**
      * Create and show a boss bar countdown for a player
      */
-    public void showCountdownBossBar(ServerPlayerEntity player, int totalSeconds) {
+    public void showCountdownBossBar(ServerPlayer player, int totalSeconds) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         if (!config.useBossBar())
             return;
 
-        UUID uuid = player.getUuid();
+        UUID uuid = player.getUUID();
 
         removeCountdownBossBar(player);
 
         LangManager lang = LangManager.getInstance();
-        ServerBossBar bossBar = new ServerBossBar(
+        ServerBossEvent bossBar = new ServerBossEvent(
                 formatText(lang.get("vouch.ui.bossbar.text", "time", totalSeconds)),
                 parseBossBarColor(config.getBossBarColor()),
                 parseBossBarStyle(config.getBossBarStyle()));
-        bossBar.setPercent(1.0f);
+        bossBar.setProgress(1.0f);
         bossBar.addPlayer(player);
 
         activeBossBars.put(uuid, bossBar);
@@ -215,13 +215,13 @@ public final class UXManager {
     /**
      * Update the boss bar countdown
      */
-    public void updateCountdownBossBar(ServerPlayerEntity player, int secondsRemaining, int totalSeconds) {
+    public void updateCountdownBossBar(ServerPlayer player, int secondsRemaining, int totalSeconds) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         if (!config.useBossBar())
             return;
 
-        UUID uuid = player.getUuid();
-        ServerBossBar bossBar = activeBossBars.get(uuid);
+        UUID uuid = player.getUUID();
+        ServerBossEvent bossBar = activeBossBars.get(uuid);
 
         if (bossBar == null)
             return;
@@ -231,21 +231,21 @@ public final class UXManager {
         bossBar.setName(formatText(text));
 
         float progress = totalSeconds > 0 ? (float) secondsRemaining / totalSeconds : 0f;
-        bossBar.setPercent(Math.max(0f, Math.min(1f, progress)));
+        bossBar.setProgress(Math.max(0f, Math.min(1f, progress)));
 
         if (secondsRemaining <= 10) {
-            bossBar.setColor(BossBar.Color.RED);
+            bossBar.setColor(BossEvent.BossBarColor.RED);
         } else if (secondsRemaining <= 20) {
-            bossBar.setColor(BossBar.Color.YELLOW);
+            bossBar.setColor(BossEvent.BossBarColor.YELLOW);
         }
     }
 
     /**
      * Remove the countdown boss bar for a player
      */
-    public void removeCountdownBossBar(ServerPlayerEntity player) {
-        UUID uuid = player.getUuid();
-        ServerBossBar bossBar = activeBossBars.remove(uuid);
+    public void removeCountdownBossBar(ServerPlayer player) {
+        UUID uuid = player.getUUID();
+        ServerBossEvent bossBar = activeBossBars.remove(uuid);
 
         if (bossBar != null) {
             bossBar.removePlayer(player);
@@ -257,44 +257,44 @@ public final class UXManager {
      * Remove boss bar by UUID (for disconnected players)
      */
     public void removeCountdownBossBar(UUID uuid) {
-        ServerBossBar bossBar = activeBossBars.remove(uuid);
+        ServerBossEvent bossBar = activeBossBars.remove(uuid);
         if (bossBar != null) {
-            bossBar.clearPlayers();
+            bossBar.removeAllPlayers();
         }
     }
 
-    private BossBar.Color parseBossBarColor(String color) {
+    private BossEvent.BossBarColor parseBossBarColor(String color) {
         try {
-            return BossBar.Color.valueOf(color.toUpperCase());
+            return BossEvent.BossBarColor.valueOf(color.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return BossBar.Color.YELLOW;
+            return BossEvent.BossBarColor.YELLOW;
         }
     }
 
-    private BossBar.Style parseBossBarStyle(String style) {
+    private BossEvent.BossBarOverlay parseBossBarStyle(String style) {
         try {
-            return BossBar.Style.valueOf(style.toUpperCase());
+            return BossEvent.BossBarOverlay.valueOf(style.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return BossBar.Style.PROGRESS;
+            return BossEvent.BossBarOverlay.PROGRESS;
         }
     }
 
     /**
      * Play a sound for the player
      */
-    public void playSound(ServerPlayerEntity player, String soundId) {
+    public void playSound(ServerPlayer player, String soundId) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         if (!config.useSounds())
             return;
 
         try {
-            Identifier id = Identifier.of(soundId);
-            SoundEvent sound = Registries.SOUND_EVENT.get(id);
+            ResourceLocation id = ResourceLocation.parse(soundId);
+            SoundEvent sound = BuiltInRegistries.SOUND_EVENT.get(id);
 
             if (sound != null) {
-                player.playSoundToPlayer(
+                player.playNotifySound(
                         sound,
-                        SoundCategory.MASTER,
+                        SoundSource.MASTER,
                         config.getSoundVolume(),
                         config.getSoundPitch());
             } else {
@@ -308,44 +308,44 @@ public final class UXManager {
     /**
      * Play login success sound
      */
-    public void playLoginSuccessSound(ServerPlayerEntity player) {
+    public void playLoginSuccessSound(ServerPlayer player) {
         playSound(player, VouchConfigManager.getInstance().getSoundLoginSuccess());
     }
 
     /**
      * Play register success sound
      */
-    public void playRegisterSuccessSound(ServerPlayerEntity player) {
+    public void playRegisterSuccessSound(ServerPlayer player) {
         playSound(player, VouchConfigManager.getInstance().getSoundRegisterSuccess());
     }
 
     /**
      * Play wrong password sound
      */
-    public void playWrongPasswordSound(ServerPlayerEntity player) {
+    public void playWrongPasswordSound(ServerPlayer player) {
         playSound(player, VouchConfigManager.getInstance().getSoundWrongPassword());
     }
 
     /**
      * Play auth timeout sound
      */
-    public void playAuthTimeoutSound(ServerPlayerEntity player) {
+    public void playAuthTimeoutSound(ServerPlayer player) {
         playSound(player, VouchConfigManager.getInstance().getSoundAuthTimeout());
     }
 
     /**
      * Play rate limited sound
      */
-    public void playRateLimitedSound(ServerPlayerEntity player) {
+    public void playRateLimitedSound(ServerPlayer player) {
         playSound(player, VouchConfigManager.getInstance().getSoundRateLimited());
     }
 
     /**
      * Format a string with color codes and return as Text
      */
-    public Text formatText(String input) {
+    public Component formatText(String input) {
         if (input == null || input.isEmpty()) {
-            return Text.empty();
+            return Component.empty();
         }
 
         VouchConfigManager config = VouchConfigManager.getInstance();
@@ -364,23 +364,23 @@ public final class UXManager {
     /**
      * Send a formatted message with prefix
      */
-    public void sendMessage(ServerPlayerEntity player, String message) {
+    public void sendMessage(ServerPlayer player, String message) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         String prefixed = config.getBrandingPrefix() + message;
-        player.sendMessage(formatText(prefixed), false);
+        player.displayClientMessage(formatText(prefixed), false);
     }
 
     /**
      * Send a raw formatted message (no prefix)
      */
-    public void sendRawMessage(ServerPlayerEntity player, String message) {
-        player.sendMessage(formatText(message), false);
+    public void sendRawMessage(ServerPlayer player, String message) {
+        player.displayClientMessage(formatText(message), false);
     }
 
     /**
      * Send welcome message for unregistered player
      */
-    public void sendWelcomeMessageUnregistered(ServerPlayerEntity player) {
+    public void sendWelcomeMessageUnregistered(ServerPlayer player) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         LangManager lang = LangManager.getInstance();
 
@@ -399,7 +399,7 @@ public final class UXManager {
     /**
      * Send welcome message for registered player
      */
-    public void sendWelcomeMessageRegistered(ServerPlayerEntity player) {
+    public void sendWelcomeMessageRegistered(ServerPlayer player) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         LangManager lang = LangManager.getInstance();
 
@@ -417,28 +417,28 @@ public final class UXManager {
     /**
      * Clear chat by sending many empty lines
      */
-    private void clearChat(ServerPlayerEntity player) {
+    private void clearChat(ServerPlayer player) {
         for (int i = 0; i < 100; i++) {
-            player.sendMessage(Text.empty(), false);
+            player.displayClientMessage(Component.empty(), false);
         }
     }
 
-    private void addPadding(ServerPlayerEntity player, int lines) {
+    private void addPadding(ServerPlayer player, int lines) {
         for (int i = 0; i < lines; i++) {
-            player.sendMessage(Text.empty(), false);
+            player.displayClientMessage(Component.empty(), false);
         }
     }
 
     /**
      * Parse Minecraft color codes (§ or &) and return Text
      */
-    private Text parseColorCodes(String input) {
+    private Component parseColorCodes(String input) {
         // Replace & with § for compatibility
         String normalized = input.replace('&', '\u00A7');
 
-        MutableText result = Text.empty();
+        MutableComponent result = Component.empty();
         StringBuilder current = new StringBuilder();
-        Formatting currentFormat = null;
+        ChatFormatting currentFormat = null;
         boolean isBold = false;
         boolean isItalic = false;
         boolean isUnderline = false;
@@ -451,43 +451,43 @@ public final class UXManager {
             if (c == '\u00A7' && i + 1 < normalized.length()) {
                 // Flush current text
                 if (!current.isEmpty()) {
-                    MutableText segment = Text.literal(current.toString());
+                    MutableComponent segment = Component.literal(current.toString());
                     if (currentFormat != null)
-                        segment.formatted(currentFormat);
+                        segment.withStyle(currentFormat);
                     if (isBold)
-                        segment.formatted(Formatting.BOLD);
+                        segment.withStyle(ChatFormatting.BOLD);
                     if (isItalic)
-                        segment.formatted(Formatting.ITALIC);
+                        segment.withStyle(ChatFormatting.ITALIC);
                     if (isUnderline)
-                        segment.formatted(Formatting.UNDERLINE);
+                        segment.withStyle(ChatFormatting.UNDERLINE);
                     if (isStrikethrough)
-                        segment.formatted(Formatting.STRIKETHROUGH);
+                        segment.withStyle(ChatFormatting.STRIKETHROUGH);
                     if (isObfuscated)
-                        segment.formatted(Formatting.OBFUSCATED);
+                        segment.withStyle(ChatFormatting.OBFUSCATED);
                     result.append(segment);
                     current = new StringBuilder();
                 }
 
                 char code = Character.toLowerCase(normalized.charAt(++i));
-                Formatting fmt = getFormattingByCode(code);
+                ChatFormatting fmt = getFormattingByCode(code);
 
                 if (fmt != null) {
-                    if (fmt == Formatting.RESET) {
+                    if (fmt == ChatFormatting.RESET) {
                         currentFormat = null;
                         isBold = false;
                         isItalic = false;
                         isUnderline = false;
                         isStrikethrough = false;
                         isObfuscated = false;
-                    } else if (fmt == Formatting.BOLD) {
+                    } else if (fmt == ChatFormatting.BOLD) {
                         isBold = true;
-                    } else if (fmt == Formatting.ITALIC) {
+                    } else if (fmt == ChatFormatting.ITALIC) {
                         isItalic = true;
-                    } else if (fmt == Formatting.UNDERLINE) {
+                    } else if (fmt == ChatFormatting.UNDERLINE) {
                         isUnderline = true;
-                    } else if (fmt == Formatting.STRIKETHROUGH) {
+                    } else if (fmt == ChatFormatting.STRIKETHROUGH) {
                         isStrikethrough = true;
-                    } else if (fmt == Formatting.OBFUSCATED) {
+                    } else if (fmt == ChatFormatting.OBFUSCATED) {
                         isObfuscated = true;
                     } else {
                         currentFormat = fmt;
@@ -500,49 +500,49 @@ public final class UXManager {
 
         // Flush remaining text
         if (!current.isEmpty()) {
-            MutableText segment = Text.literal(current.toString());
+            MutableComponent segment = Component.literal(current.toString());
             if (currentFormat != null)
-                segment.formatted(currentFormat);
+                segment.withStyle(currentFormat);
             if (isBold)
-                segment.formatted(Formatting.BOLD);
+                segment.withStyle(ChatFormatting.BOLD);
             if (isItalic)
-                segment.formatted(Formatting.ITALIC);
+                segment.withStyle(ChatFormatting.ITALIC);
             if (isUnderline)
-                segment.formatted(Formatting.UNDERLINE);
+                segment.withStyle(ChatFormatting.UNDERLINE);
             if (isStrikethrough)
-                segment.formatted(Formatting.STRIKETHROUGH);
+                segment.withStyle(ChatFormatting.STRIKETHROUGH);
             if (isObfuscated)
-                segment.formatted(Formatting.OBFUSCATED);
+                segment.withStyle(ChatFormatting.OBFUSCATED);
             result.append(segment);
         }
 
         return result;
     }
 
-    private Formatting getFormattingByCode(char code) {
+    private ChatFormatting getFormattingByCode(char code) {
         return switch (code) {
-            case '0' -> Formatting.BLACK;
-            case '1' -> Formatting.DARK_BLUE;
-            case '2' -> Formatting.DARK_GREEN;
-            case '3' -> Formatting.DARK_AQUA;
-            case '4' -> Formatting.DARK_RED;
-            case '5' -> Formatting.DARK_PURPLE;
-            case '6' -> Formatting.GOLD;
-            case '7' -> Formatting.GRAY;
-            case '8' -> Formatting.DARK_GRAY;
-            case '9' -> Formatting.BLUE;
-            case 'a' -> Formatting.GREEN;
-            case 'b' -> Formatting.AQUA;
-            case 'c' -> Formatting.RED;
-            case 'd' -> Formatting.LIGHT_PURPLE;
-            case 'e' -> Formatting.YELLOW;
-            case 'f' -> Formatting.WHITE;
-            case 'k' -> Formatting.OBFUSCATED;
-            case 'l' -> Formatting.BOLD;
-            case 'm' -> Formatting.STRIKETHROUGH;
-            case 'n' -> Formatting.UNDERLINE;
-            case 'o' -> Formatting.ITALIC;
-            case 'r' -> Formatting.RESET;
+            case '0' -> ChatFormatting.BLACK;
+            case '1' -> ChatFormatting.DARK_BLUE;
+            case '2' -> ChatFormatting.DARK_GREEN;
+            case '3' -> ChatFormatting.DARK_AQUA;
+            case '4' -> ChatFormatting.DARK_RED;
+            case '5' -> ChatFormatting.DARK_PURPLE;
+            case '6' -> ChatFormatting.GOLD;
+            case '7' -> ChatFormatting.GRAY;
+            case '8' -> ChatFormatting.DARK_GRAY;
+            case '9' -> ChatFormatting.BLUE;
+            case 'a' -> ChatFormatting.GREEN;
+            case 'b' -> ChatFormatting.AQUA;
+            case 'c' -> ChatFormatting.RED;
+            case 'd' -> ChatFormatting.LIGHT_PURPLE;
+            case 'e' -> ChatFormatting.YELLOW;
+            case 'f' -> ChatFormatting.WHITE;
+            case 'k' -> ChatFormatting.OBFUSCATED;
+            case 'l' -> ChatFormatting.BOLD;
+            case 'm' -> ChatFormatting.STRIKETHROUGH;
+            case 'n' -> ChatFormatting.UNDERLINE;
+            case 'o' -> ChatFormatting.ITALIC;
+            case 'r' -> ChatFormatting.RESET;
             default -> null;
         };
     }
@@ -550,7 +550,7 @@ public final class UXManager {
     /**
      * Send complete login success feedback (title + sound + message)
      */
-    public void onLoginSuccess(ServerPlayerEntity player) {
+    public void onLoginSuccess(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         sendLoginSuccessTitle(player);
         playLoginSuccessSound(player);
@@ -562,7 +562,7 @@ public final class UXManager {
     /**
      * Send complete register success feedback (title + sound + message)
      */
-    public void onRegisterSuccess(ServerPlayerEntity player) {
+    public void onRegisterSuccess(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         sendRegisterSuccessTitle(player);
         playRegisterSuccessSound(player);
@@ -574,7 +574,7 @@ public final class UXManager {
     /**
      * Send wrong password feedback
      */
-    public void onWrongPassword(ServerPlayerEntity player) {
+    public void onWrongPassword(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         sendWrongPasswordTitle(player);
         playWrongPasswordSound(player);
@@ -584,7 +584,7 @@ public final class UXManager {
     /**
      * Send session restored feedback
      */
-    public void onSessionRestored(ServerPlayerEntity player) {
+    public void onSessionRestored(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         sendLoginSuccessTitle(player);
         playLoginSuccessSound(player);
@@ -594,7 +594,7 @@ public final class UXManager {
     /**
      * Send premium auto-login success feedback
      */
-    public void onPremiumAutoLogin(ServerPlayerEntity player) {
+    public void onPremiumAutoLogin(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
         sendTitle(player,
                 lang.getRaw("vouch.ui.title.premium_login"),
@@ -606,7 +606,7 @@ public final class UXManager {
     /**
      * Send premium verified but 2FA required feedback
      */
-    public void onPremiumRequires2FA(ServerPlayerEntity player) {
+    public void onPremiumRequires2FA(ServerPlayer player) {
         LangManager lang = LangManager.getInstance();
 
         VouchConfigManager config = VouchConfigManager.getInstance();
@@ -624,8 +624,8 @@ public final class UXManager {
     /**
      * Clear action bar
      */
-    private void clearActionBar(ServerPlayerEntity player) {
-        sendPacket(player, new OverlayMessageS2CPacket(Text.empty()));
+    private void clearActionBar(ServerPlayer player) {
+        sendPacket(player, new ClientboundSetActionBarTextPacket(Component.empty()));
     }
 
     /**
@@ -636,8 +636,8 @@ public final class UXManager {
     }
 
     public void shutdown() {
-        for (ServerBossBar bar : activeBossBars.values()) {
-            bar.clearPlayers();
+        for (ServerBossEvent bar : activeBossBars.values()) {
+            bar.removeAllPlayers();
         }
         activeBossBars.clear();
         LOGGER.debug("UXManager shutdown complete");

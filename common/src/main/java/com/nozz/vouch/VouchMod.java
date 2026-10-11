@@ -26,9 +26,9 @@ import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,7 +134,7 @@ public final class VouchMod {
             LOGGER.info("Server starting, initializing database...");
 
             try {
-                ConnectionFactory.getInstance().initialize(server.getRunDirectory());
+                ConnectionFactory.getInstance().initialize(server.getServerDirectory());
 
                 DatabaseManager.getInstance().initializeSchema();
 
@@ -164,11 +164,11 @@ public final class VouchMod {
         DatabaseManager dbManager = DatabaseManager.getInstance();
 
         PlayerEvent.PLAYER_JOIN.register(player -> {
-            ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             LOGGER.debug("Player joined: {}", serverPlayer.getName().getString());
 
             // Check if player has bypass permission (for bots, service accounts, etc.)
-            if (PermissionHelper.canBypassAuth(serverPlayer.getCommandSource())) {
+            if (PermissionHelper.canBypassAuth(serverPlayer.createCommandSourceStack())) {
                 authManager.authenticateFromSession(serverPlayer);
                 CommandVisibility.resend(serverPlayer);
                 LOGGER.info("Player {} bypassed authentication via permission", serverPlayer.getName().getString());
@@ -181,7 +181,7 @@ public final class VouchMod {
             // Asked exactly once per join, because the record is consumed on read.
             // Both the session decision and the premium path need the answer.
             boolean premiumVerified = MixedModeLoginHandler.getInstance()
-                    .wasVerifiedAtLogin(serverPlayer.getUuid(), serverPlayer.getName().getString());
+                    .wasVerifiedAtLogin(serverPlayer.getUUID(), serverPlayer.getName().getString());
 
             java.util.function.Function<Boolean, SessionRestoreFacts> facts = twoFactorEnabled ->
                     SessionRestoreFacts.builder()
@@ -203,7 +203,7 @@ public final class VouchMod {
                             .build()) != SessionRestoreDecision.NO_SESSION;
 
             CompletableFuture<Boolean> sessionCheck = sessionWorthChecking
-                    ? authManager.hasValidSession(serverPlayer.getUuid(), ip.orElseThrow())
+                    ? authManager.hasValidSession(serverPlayer.getUUID(), ip.orElseThrow())
                     : CompletableFuture.completedFuture(false);
 
             Runnable withoutSession = () -> {
@@ -215,7 +215,7 @@ public final class VouchMod {
             };
 
             onMain(sessionCheck, "session check for " + serverPlayer.getName().getString(), hasValidSession -> {
-                if (serverPlayer.isDisconnected()) {
+                if (serverPlayer.hasDisconnected()) {
                     return;
                 }
                 if (!hasValidSession) {
@@ -225,10 +225,10 @@ public final class VouchMod {
 
                 // There is a live session. Whether it is enough depends on the
                 // account's second factor, which a session cannot satisfy.
-                onMain(dbManager.has2FAEnabled(serverPlayer.getUuid()),
+                onMain(dbManager.has2FAEnabled(serverPlayer.getUUID()),
                         "2FA lookup for " + serverPlayer.getName().getString(),
                         twoFactorEnabled -> {
-                            if (serverPlayer.isDisconnected()) {
+                            if (serverPlayer.hasDisconnected()) {
                                 return;
                             }
                             if (SessionRestorePolicy.decide(facts.apply(twoFactorEnabled))
@@ -250,12 +250,12 @@ public final class VouchMod {
         });
 
         PlayerEvent.PLAYER_QUIT.register(player -> {
-            ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+            ServerPlayer serverPlayer = (ServerPlayer) player;
             LOGGER.debug("Player quit: {}", serverPlayer.getName().getString());
             authManager.removePlayer(serverPlayer);
         });
         InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, direction) -> {
-            if (player instanceof ServerPlayerEntity serverPlayer) {
+            if (player instanceof ServerPlayer serverPlayer) {
                 if (!authManager.isAuthenticated(serverPlayer)) {
                     return dev.architectury.event.EventResult.interruptFalse();
                 }
@@ -264,7 +264,7 @@ public final class VouchMod {
         });
 
         InteractionEvent.LEFT_CLICK_BLOCK.register((player, hand, pos, direction) -> {
-            if (player instanceof ServerPlayerEntity serverPlayer) {
+            if (player instanceof ServerPlayer serverPlayer) {
                 if (!authManager.isAuthenticated(serverPlayer)) {
                     return dev.architectury.event.EventResult.interruptFalse();
                 }
@@ -273,7 +273,7 @@ public final class VouchMod {
         });
 
         InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
-            if (player instanceof ServerPlayerEntity serverPlayer) {
+            if (player instanceof ServerPlayer serverPlayer) {
                 if (!authManager.isAuthenticated(serverPlayer)) {
                     return dev.architectury.event.EventResult.interruptFalse();
                 }
@@ -282,7 +282,7 @@ public final class VouchMod {
         });
 
         TickEvent.PLAYER_POST.register(player -> {
-            if (!(player instanceof ServerPlayerEntity serverPlayer)) return;
+            if (!(player instanceof ServerPlayer serverPlayer)) return;
             if (authManager.isPendingAuth(serverPlayer)) {
                 PreAuthManager.getInstance().enforcePositionFreeze(serverPlayer);
             }
@@ -328,7 +328,7 @@ public final class VouchMod {
      * comparing their UUID against the offline UUID for their username.
      * If they differ, the player was verified as premium during login.
      */
-    private void handlePremiumAutoLogin(ServerPlayerEntity serverPlayer, AuthManager authManager,
+    private void handlePremiumAutoLogin(ServerPlayer serverPlayer, AuthManager authManager,
                                         DatabaseManager dbManager, boolean verifiedAtLogin) {
         String username = serverPlayer.getName().getString();
 
@@ -358,11 +358,11 @@ public final class VouchMod {
      * other way would leave them loose in the world; this way the worst case is a
      * misleading prompt in front of a locked door.
      */
-    private void jailPlayer(ServerPlayerEntity player, AuthManager authManager, DatabaseManager dbManager) {
-        onMain(dbManager.isRegistered(player.getUuid()),
+    private void jailPlayer(ServerPlayer player, AuthManager authManager, DatabaseManager dbManager) {
+        onMain(dbManager.isRegistered(player.getUUID()),
                 "registration lookup for " + player.getName().getString(),
                 isRegistered -> {
-                    if (player.isDisconnected()) {
+                    if (player.hasDisconnected()) {
                         return;
                     }
                     RegisteredNames.getInstance().setPresent(player.getName().getString(), isRegistered);
@@ -370,10 +370,10 @@ public final class VouchMod {
                     CommandVisibility.resend(player);
                 },
                 () -> {
-                    if (player.isDisconnected()) {
+                    if (player.hasDisconnected()) {
                         return;
                     }
-                    player.sendMessage(Messages.databaseConnectionError(), false);
+                    player.displayClientMessage(Messages.databaseConnectionError(), false);
                     authManager.addPendingPlayer(player, false);
                     CommandVisibility.resend(player);
                 });
@@ -387,14 +387,14 @@ public final class VouchMod {
      * premium login has never spoken to the database, so without this the player is
      * offered {@code /vouch 2fa setup} when they already have 2FA configured.
      */
-    private void syncTwoFactorFlagThenResend(ServerPlayerEntity player, DatabaseManager dbManager) {
-        onMain(dbManager.has2FAEnabled(player.getUuid()),
+    private void syncTwoFactorFlagThenResend(ServerPlayer player, DatabaseManager dbManager) {
+        onMain(dbManager.has2FAEnabled(player.getUUID()),
                 "2FA status for " + player.getName().getString(),
                 has2FA -> {
-                    if (player.isDisconnected()) {
+                    if (player.hasDisconnected()) {
                         return;
                     }
-                    PlayerSession session = AuthManager.getInstance().getSession(player.getUuid());
+                    PlayerSession session = AuthManager.getInstance().getSession(player.getUUID());
                     if (session != null) {
                         session.set2FAEnabled(has2FA);
                     }
@@ -422,14 +422,14 @@ public final class VouchMod {
      * Complete premium auto-login for a player verified as premium.
      * Handles 2FA enforcement if configured.
      */
-    private void completePremiumAutoLogin(ServerPlayerEntity serverPlayer, AuthManager authManager, DatabaseManager dbManager) {
+    private void completePremiumAutoLogin(ServerPlayer serverPlayer, AuthManager authManager, DatabaseManager dbManager) {
         String username = serverPlayer.getName().getString();
 
         // Ensure premium player has a row in vouch_players before creating sessions
-        onMain(dbManager.ensurePremiumPlayerRegistered(serverPlayer.getUuid(), username),
+        onMain(dbManager.ensurePremiumPlayerRegistered(serverPlayer.getUUID(), username),
                 "premium auto-registration for " + username,
                 registered -> {
-                    if (serverPlayer.isDisconnected()) return;
+                    if (serverPlayer.hasDisconnected()) return;
 
                     RegisteredNames.getInstance().add(username);
 
@@ -441,14 +441,14 @@ public final class VouchMod {
                         return;
                     }
 
-                    onMain(dbManager.has2FAEnabled(serverPlayer.getUuid()),
+                    onMain(dbManager.has2FAEnabled(serverPlayer.getUUID()),
                             "2FA status for " + username,
                             has2FA -> {
-                                if (serverPlayer.isDisconnected()) return;
+                                if (serverPlayer.hasDisconnected()) return;
                                 if (has2FA) {
                                     authManager.addPendingPremiumFor2FA(serverPlayer);
                                     PlayerSession session =
-                                            authManager.getSession(serverPlayer.getUuid());
+                                            authManager.getSession(serverPlayer.getUUID());
                                     if (session != null) {
                                         session.set2FAEnabled(true);
                                     }
@@ -463,14 +463,14 @@ public final class VouchMod {
                             // whether this one has one — so nobody is let in on a
                             // database outage. Jail, not access.
                             () -> {
-                                if (serverPlayer.isDisconnected()) return;
-                                serverPlayer.sendMessage(Messages.databaseConnectionError(), false);
+                                if (serverPlayer.hasDisconnected()) return;
+                                serverPlayer.displayClientMessage(Messages.databaseConnectionError(), false);
                                 jailPlayer(serverPlayer, authManager, dbManager);
                             });
                 },
                 () -> {
-                    if (serverPlayer.isDisconnected()) return;
-                    serverPlayer.sendMessage(Messages.databaseConnectionError(), false);
+                    if (serverPlayer.hasDisconnected()) return;
+                    serverPlayer.displayClientMessage(Messages.databaseConnectionError(), false);
                     jailPlayer(serverPlayer, authManager, dbManager);
                 });
     }
@@ -541,10 +541,10 @@ public final class VouchMod {
      * something went wrong when it does.
      */
     public <T> void onMain(CompletableFuture<T> future, String context,
-                           ServerPlayerEntity player, Consumer<T> consumer) {
+                           ServerPlayer player, Consumer<T> consumer) {
         onMain(future, context, consumer, () -> {
-            if (player != null && !player.isDisconnected()) {
-                player.sendMessage(Messages.internalError(), false);
+            if (player != null && !player.hasDisconnected()) {
+                player.displayClientMessage(Messages.internalError(), false);
             }
         });
     }
@@ -555,9 +555,9 @@ public final class VouchMod {
      * fail-closed 2FA lookup that has to leave the player outside.
      */
     public <T> void onMain(CompletableFuture<T> future, String context,
-                           ServerPlayerEntity player, Consumer<T> consumer, Runnable onFailure) {
+                           ServerPlayer player, Consumer<T> consumer, Runnable onFailure) {
         onMain(future, context, consumer, () -> {
-            if (player != null && !player.isDisconnected()) {
+            if (player != null && !player.hasDisconnected()) {
                 onFailure.run();
             }
         });
@@ -568,10 +568,10 @@ public final class VouchMod {
      * command whose source may be the console rather than a player.
      */
     public <T> void onMain(CompletableFuture<T> future, String context,
-                           ServerCommandSource source, Consumer<T> consumer) {
+                           CommandSourceStack source, Consumer<T> consumer) {
         onMain(future, context, consumer, () -> {
             if (source != null) {
-                source.sendError(Messages.internalError());
+                source.sendFailure(Messages.internalError());
             }
         });
     }

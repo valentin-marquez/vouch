@@ -3,16 +3,16 @@ package com.nozz.vouch.auth;
 import com.mojang.authlib.GameProfile;
 import com.nozz.vouch.util.PremiumVerifier;
 import com.nozz.vouch.util.PremiumVerifier.PremiumLookup;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.encryption.NetworkEncryptionException;
-import net.minecraft.network.encryption.NetworkEncryptionUtils;
-import net.minecraft.network.packet.c2s.login.LoginKeyC2SPacket;
-import net.minecraft.network.packet.s2c.login.LoginHelloS2CPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.login.ClientboundHelloPacket;
+import net.minecraft.network.protocol.login.ServerboundKeyPacket;
+import net.minecraft.util.Crypt;
+import net.minecraft.util.CryptException;
 import java.math.BigInteger;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -130,20 +130,20 @@ public final class MixedModeLoginHandler {
      * @return {@code false} if the pending-challenge store is full, in which
      *         case nothing was sent and the caller must disconnect the client
      */
-    public boolean initiatePremiumVerification(ClientConnection connection, String username, KeyPair keyPair) {
+    public boolean initiatePremiumVerification(Connection connection, String username, KeyPair keyPair) {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[4];
         random.nextBytes(nonce);
         String serverId = Long.toHexString(random.nextLong());
 
         PendingVerification pending = new PendingVerification(username, serverId, nonce, keyPair);
-        if (!pendingVerifications.put(connection.getAddress(), pending)) {
+        if (!pendingVerifications.put(connection.getRemoteAddress(), pending)) {
             LOGGER.warn("Refusing premium verification for {}: {} challenges already in flight",
                     username, pendingVerifications.size());
             return false;
         }
 
-        connection.send(new LoginHelloS2CPacket(serverId, keyPair.getPublic().getEncoded(), nonce, true));
+        connection.send(new ClientboundHelloPacket(serverId, keyPair.getPublic().getEncoded(), nonce, true));
         LOGGER.debug("Sent encryption request to {} for premium verification", username);
         return true;
     }
@@ -161,8 +161,8 @@ public final class MixedModeLoginHandler {
      * {@link Outcome#REJECTED} or {@link Outcome#UNAVAILABLE}.
      */
     public CompletableFuture<VerificationResult> handleEncryptionResponse(
-            ClientConnection connection, LoginKeyC2SPacket packet) {
-        SocketAddress address = connection.getAddress();
+            Connection connection, ServerboundKeyPacket packet) {
+        SocketAddress address = connection.getRemoteAddress();
         Optional<PendingVerification> maybePending = pendingVerifications.take(address);
 
         if (maybePending.isEmpty()) {
@@ -178,20 +178,20 @@ public final class MixedModeLoginHandler {
         try {
             PrivateKey privateKey = pending.keyPair().getPrivate();
 
-            if (!packet.verifySignedNonce(pending.nonce(), privateKey)) {
+            if (!packet.isChallengeValid(pending.nonce(), privateKey)) {
                 LOGGER.warn("Nonce verification failed for {}", pending.username());
                 return CompletableFuture.completedFuture(VerificationResult.rejected());
             }
 
-            SecretKey sharedSecret = packet.decryptSecretKey(privateKey);
+            SecretKey sharedSecret = packet.getSecretKey(privateKey);
             serverHash = computeServerIdHash(pending.serverId(), sharedSecret, pending.keyPair().getPublic());
 
             // Vanilla enables the cipher on the netty thread, before it starts
             // authenticating, and so do we.
-            Cipher decryptCipher = NetworkEncryptionUtils.cipherFromKey(Cipher.DECRYPT_MODE, sharedSecret);
-            Cipher encryptCipher = NetworkEncryptionUtils.cipherFromKey(Cipher.ENCRYPT_MODE, sharedSecret);
-            connection.setupEncryption(decryptCipher, encryptCipher);
-        } catch (NetworkEncryptionException e) {
+            Cipher decryptCipher = Crypt.getCipher(Cipher.DECRYPT_MODE, sharedSecret);
+            Cipher encryptCipher = Crypt.getCipher(Cipher.ENCRYPT_MODE, sharedSecret);
+            connection.setEncryptionKey(decryptCipher, encryptCipher);
+        } catch (CryptException e) {
             LOGGER.warn("Encryption error during premium verification for {}: {}",
                     pending.username(), e.getMessage());
             return CompletableFuture.completedFuture(VerificationResult.rejected());
@@ -234,8 +234,8 @@ public final class MixedModeLoginHandler {
      * expected rejection path — a cracked client picking a premium username —
      * goes exactly that way.
      */
-    public void cleanup(ClientConnection connection) {
-        pendingVerifications.discard(connection.getAddress());
+    public void cleanup(Connection connection) {
+        pendingVerifications.discard(connection.getRemoteAddress());
     }
 
     // ------------------------------------------------------------------

@@ -1,8 +1,8 @@
 package com.nozz.vouch.util;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Platform-agnostic packet sending utility.
@@ -23,7 +23,7 @@ public final class PacketHelper {
      * @param packet The packet to send
      */
     @ExpectPlatform
-    public static void sendPacket(ServerPlayerEntity player, Packet<?> packet) {
+    public static void sendPacket(ServerPlayer player, Packet<?> packet) {
         throw new AssertionError("Platform implementation not loaded");
     }
 }

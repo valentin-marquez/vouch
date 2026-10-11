@@ -62,7 +62,7 @@ public final class VouchNeoForge {
                 vouchNode.id().replace("vouch.", ""),
                 PermissionTypes.BOOLEAN,
                 (player, uuid, context) -> player != null
-                        && player.hasPermissionLevel(vouchNode.defaultOpLevel())
+                        && player.hasPermissions(vouchNode.defaultOpLevel())
         );
         event.addNodes(node);
         PermissionHelperImpl.registerNode(node);

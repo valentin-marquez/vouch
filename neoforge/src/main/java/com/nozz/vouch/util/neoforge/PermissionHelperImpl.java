@@ -1,7 +1,7 @@
 package com.nozz.vouch.util.neoforge;
 
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.permission.PermissionAPI;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
 
@@ -43,15 +43,15 @@ public final class PermissionHelperImpl {
      * @param defaultOpLevel The OP level to use as fallback
      * @return true if the source has the permission
      */
-    public static boolean hasPermission(ServerCommandSource source, String permission, int defaultOpLevel) {
+    public static boolean hasPermission(CommandSourceStack source, String permission, int defaultOpLevel) {
         // For non-player sources (console, command blocks), use OP level check
-        if (!source.isExecutedByPlayer()) {
-            return source.hasPermissionLevel(defaultOpLevel);
+        if (!source.isPlayer()) {
+            return source.hasPermission(defaultOpLevel);
         }
 
-        ServerPlayerEntity player = source.getPlayer();
+        ServerPlayer player = source.getPlayer();
         if (player == null) {
-            return source.hasPermissionLevel(defaultOpLevel);
+            return source.hasPermission(defaultOpLevel);
         }
 
         // Try to get the registered permission node
@@ -62,11 +62,11 @@ public final class PermissionHelperImpl {
                 return result;
             } catch (Exception e) {
                 // Fallback to OP level on any error
-                return source.hasPermissionLevel(defaultOpLevel);
+                return source.hasPermission(defaultOpLevel);
             }
         }
 
         // Node not registered, fall back to OP level
-        return source.hasPermissionLevel(defaultOpLevel);
+        return source.hasPermission(defaultOpLevel);
     }
 }
