@@ -32,6 +32,41 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PermissionHelperTest {
 
     @Nested
+    class OpLevelFallback {
+
+        @Test
+        void explicitGrantOnlyIsUnreachableByAnyOpLevel() {
+            assertTrue(PermissionHelper.unreachableByOpLevel(PermissionHelper.Defaults.EXPLICIT_GRANT_ONLY));
+            assertTrue(PermissionHelper.unreachableByOpLevel(PermissionHelper.Defaults.MAX_VANILLA_OP_LEVEL + 1));
+            assertFalse(PermissionHelper.unreachableByOpLevel(PermissionHelper.Defaults.MAX_VANILLA_OP_LEVEL));
+            assertFalse(PermissionHelper.unreachableByOpLevel(PermissionHelper.Defaults.USER_COMMAND));
+        }
+
+        @Test
+        void bypassNodeIsDeclaredExplicitGrantOnly() {
+            // If this ever changes, the platform fallbacks stop protecting it.
+            assertTrue(PermissionHelper.Nodes.byId(PermissionHelper.Nodes.BYPASS_AUTH)
+                    .orElseThrow().explicitGrantOnly());
+        }
+
+        @Test
+        void aServerOwnerStillCannotSatisfyAnExplicitGrantOnlyLevel() {
+            // The highest-privileged set vanilla can build: it must satisfy level 4, never beyond.
+            var owner = net.minecraft.server.permissions.LevelBasedPermissionSet.OWNER;
+            assertTrue(PermissionHelper.permissionSetHasLevel(owner, 4));
+            assertFalse(PermissionHelper.permissionSetHasLevel(owner,
+                    PermissionHelper.Defaults.EXPLICIT_GRANT_ONLY));
+        }
+
+        @Test
+        void everyoneSatisfiesLevelZeroAndNoOneSatisfiesAHigherLevelWithoutPermissions() {
+            var none = net.minecraft.server.permissions.PermissionSet.NO_PERMISSIONS;
+            assertTrue(PermissionHelper.permissionSetHasLevel(none, 0));
+            assertFalse(PermissionHelper.permissionSetHasLevel(none, 2));
+        }
+    }
+
+    @Nested
     class BypassResolution {
 
         @Test

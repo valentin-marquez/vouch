@@ -1,5 +1,6 @@
 package com.nozz.vouch.util.fabric;
 
+import com.nozz.vouch.util.PermissionHelper;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.commands.CommandSourceStack;
 
@@ -28,6 +29,12 @@ public final class PermissionHelperImpl {
      * @return true if the source has the permission
      */
     public static boolean hasPermission(CommandSourceStack source, String permission, int defaultOpLevel) {
+        // fabric-permissions-api clamps the level into 0..4 before comparing, so an
+        // explicit-grant-only node (Integer.MAX_VALUE) would become "operator level 4" and be
+        // satisfied by every operator. Such nodes must fall back to "denied" instead.
+        if (PermissionHelper.unreachableByOpLevel(defaultOpLevel)) {
+            return Permissions.check(source, permission, false);
+        }
         return Permissions.check(source, permission, defaultOpLevel);
     }
 }

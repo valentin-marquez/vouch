@@ -153,6 +153,18 @@ public final class PermissionHelper {
     }
 
     /**
+     * Whether no vanilla OP level can satisfy a node, i.e. only an explicit grant can.
+     *
+     * <p>Platform code must test this <em>before</em> handing the level to anything that
+     * converts it: on 26.x {@code PermissionLevel.byId} clamps out-of-range ids to the highest
+     * level, so a library that does {@code byId(Integer.MAX_VALUE)} quietly turns "nobody" into
+     * "every operator".
+     */
+    public static boolean unreachableByOpLevel(int level) {
+        return level > Defaults.MAX_VANILLA_OP_LEVEL;
+    }
+
+    /**
      * Vanilla's op-level check on the permission model Minecraft 26.x uses in place of
      * {@code hasPermission(int)}.
      *
@@ -161,7 +173,7 @@ public final class PermissionHelper {
      * level; {@code PermissionLevel.byId} must never see such a value.
      */
     public static boolean permissionSetHasLevel(PermissionSet permissions, int level) {
-        if (level > Defaults.MAX_VANILLA_OP_LEVEL) {
+        if (unreachableByOpLevel(level)) {
             return false;
         }
         if (level <= Defaults.USER_COMMAND) {
