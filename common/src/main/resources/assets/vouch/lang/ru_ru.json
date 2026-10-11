@@ -1,0 +1,116 @@
+{
+  "_comment": "Vouch Authentication Mod - Russian Language File",
+  "_version": "0.1.0",
+  
+  "vouch.auth.welcome.unregistered": "&6Добро пожаловать! Пожалуйста, зарегистрируйтесь: &f/register <пароль> <пароль>",
+  "vouch.auth.welcome.registered": "&6С возвращением! Пожалуйста, войдите: &f/login <пароль>",
+  "vouch.auth.welcome.2fa_only.unregistered": "&6Добро пожаловать! Используйте &f/register &6для настройки 2FA",
+  "vouch.auth.welcome.2fa_only.registered": "&6С возвращением! Используйте: &f/login <код> &6из вашего приложения",
+  
+  "vouch.auth.login.success": "&aВход выполнен! С возвращением.",
+  "vouch.auth.login.wrong_password": "&cНеверный пароль!",
+  "vouch.auth.login.too_many_attempts": "&cСлишком много неудачных попыток! Пожалуйста, подождите.",
+  "vouch.auth.login.locked_out": "&cАккаунт заблокирован. Попробуйте снова через {time} сек.",
+  
+  "vouch.auth.register.success": "&aРегистрация завершена! Вы вошли в систему.",
+  "vouch.auth.register.success_2fa": "&aРегистрация завершена! Отсканируйте QR-код для завершения настройки.",
+  "vouch.auth.register.password_mismatch": "&cПароли не совпадают! Попробуйте еще раз.",
+  "vouch.auth.register.password_too_short": "&cПароль слишком короткий! Минимум символов: {min}.",
+  "vouch.auth.register.password_too_long": "&cПароль слишком длинный! Максимум символов: {max}.",
+  "vouch.auth.register.already_registered": "&cВы уже зарегистрированы! Используйте /login.",
+  
+  "vouch.auth.not_registered": "&cВы не зарегистрированы! Сначала используйте /register.",
+  "vouch.auth.already_logged_in": "&eВы уже вошли в систему!",
+  "vouch.auth.timeout": "Время ожидания авторизации истекло. Переподключитесь к серверу.",
+  "vouch.auth.session_restored": "&aСессия восстановлена! С возвращением.",
+  "vouch.auth.session_expired": "&cВремя действия сессии истекло. Пожалуйста, войдите снова.",
+  
+  "vouch.auth.premium.auto_login": "&aЛицензионный аккаунт подтвержден. Авто-вход выполнен!",
+  "vouch.auth.premium.require_2fa": "&aЛицензионный аккаунт подтвержден. &eПройдите 2FA: &f/2fa verify <код>",
+  
+  "vouch.auth.logout.success": "&eВы вышли из системы. Сессия аннулирована.",
+  "vouch.auth.logout.kick": "Вы вышли из системы. Пожалуйста, переподключитесь для авторизации.",
+  
+  "vouch.jail.chat_blocked": "&cВы не можете писать в чат до авторизации!",
+  "vouch.jail.action_blocked": "&cВы не можете делать это до авторизации!",
+  "vouch.jail.command_blocked": "&cСейчас вы можете использовать только команды авторизации!",
+  "vouch.jail.processing": "&7Обработка...",
+  
+  "vouch.2fa.required": "&eВключена двухфакторная аутентификация. Используйте: &f/2fa verify <код>",
+  "vouch.2fa.setup.instructions": "&eОтсканируйте QR-код в приложении, затем используйте: &f/2fa verify <код>",
+  "vouch.2fa.setup.manual_secret": "&7Код для ручного ввода: &b{secret}",
+  "vouch.2fa.setup.failed": "&cНе удалось создать QR-код. Попробуйте еще раз.",
+  "vouch.2fa.enabled": "&a2FA успешно включена!",
+  "vouch.2fa.disabled": "&e2FA отключена.",
+  "vouch.2fa.invalid_code": "&cНеверный код 2FA. Попробуйте еще раз.",
+  "vouch.2fa.already_enabled": "&e2FA уже включена! Используйте &f/2fa disable <код>&e, чтобы сначала отключить её.",
+  "vouch.2fa.not_enabled": "&e2FA не включена. Используйте &f/2fa setup&e для настройки.",
+  "vouch.2fa.nothing_pending": "&eНет активных запросов на 2FA. Используйте &f/2fa setup&e для начала.",
+  "vouch.2fa.status.enabled": "&7Статус 2FA: &aВКЛЮЧЕНО",
+  "vouch.2fa.status.disabled": "&7Статус 2FA: &cОТКЛЮЧЕНО &7- используйте /2fa setup для включения",
+  "vouch.2fa.must_login_first": "&cСначала необходимо войти в систему!",
+  "vouch.2fa.required_for_ops": "&eКак оператор, вы обязаны включить 2FA. Используйте: &f/2fa setup",
+  
+  "vouch.admin.player_unregistered": "&aРегистрация игрока &6{player}&a удалена.",
+  "vouch.admin.player_not_found": "&cИгрок &6{player}&c не найден или не зарегистрирован.",
+  "vouch.admin.player_2fa_reset": "&a2FA для игрока &6{player}&a была сброшена.",
+  "vouch.admin.config_reloaded": "&aКонфигурация успешно перезагружена!",
+  "vouch.admin.lang_exported": "&aЯзыковой файл экспортирован в: &f{path}",
+  "vouch.admin.database_error": "&cОшибка базы данных. Проверьте логи сервера.",
+  "vouch.admin.no_permission": "&cУ вас нет прав на использование этой команды.",
+  
+  "vouch.ui.title.welcome": "&6Требуется авторизация",
+  "vouch.ui.title.login_success": "&a✓ С возвращением!",
+  "vouch.ui.title.register_success": "&a✓ Зарегистрирован!",
+  "vouch.ui.title.wrong_password": "&c✗ Неверный пароль",
+  "vouch.ui.title.2fa_success": "&a✓ 2FA подтверждена!",
+  "vouch.ui.title.premium_login": "&a✓ Лицензия подтверждена!",
+  
+  "vouch.ui.subtitle.unregistered": "&eИспользуйте &f/register &eдля начала",
+  "vouch.ui.subtitle.registered": "&eИспользуйте &f/login &eдля продолжения",
+  "vouch.ui.subtitle.2fa_only.unregistered": "&eИспользуйте &f/register &eдля настройки 2FA",
+  "vouch.ui.subtitle.2fa_only.registered": "&eВведите 6-значный код из приложения",
+  "vouch.ui.subtitle.login_success": "&7Вы вошли в систему",
+  "vouch.ui.subtitle.register_success": "&7Ваш аккаунт создан",
+  "vouch.ui.subtitle.wrong_password": "&7Попробуйте еще раз",
+  "vouch.ui.subtitle.premium_login": "&7Авто-вход выполнен",
+  "vouch.ui.subtitle.premium_2fa": "&7Пройдите 2FA для продолжения",
+  
+  "vouch.ui.actionbar.pre_auth": "&e⏳ Осталось времени: &f{time}с &8| &e/login или /register",
+  "vouch.ui.actionbar.pre_auth_2fa_only": "&e⏳ Осталось времени: &f{time}с &8| &e/register или /login <код>",
+  "vouch.ui.actionbar.awaiting_2fa": "&6🔐 Введите код 2FA: &f/2fa verify <код>",
+  "vouch.ui.actionbar.rate_limited": "&c⏰ Слишком много попыток. Подождите &f{time}с",
+  
+  "vouch.ui.bossbar.text": "&e🔒 Требуется авторизация - осталось {time}с",
+  "vouch.ui.bossbar.awaiting_2fa": "&6🔐 Требуется подтверждение 2FA",
+  
+  "vouch.command.usage.register": "&eИспользование: &f/register <пароль> <подтверждение>",
+  "vouch.command.usage.register_2fa": "&eИспользование: &f/register &7(создает QR-код для 2FA)",
+  "vouch.command.usage.login": "&eИспользование: &f/login <пароль>",
+  "vouch.command.usage.login_2fa": "&eИспользование: &f/login <код_2fa>",
+  "vouch.command.usage.2fa_verify": "&eИспользование: &f/2fa verify <код>",
+  "vouch.command.usage.2fa_disable": "&eИспользование: &f/2fa disable <код>",
+  
+  "vouch.command.disabled.2fa": "&cДвухфакторная аутентификация отключена на этом сервере.",
+  "vouch.command.disabled.password": "&cАвторизация по паролю отключена на этом сервере.",
+  
+  "vouch.error.internal": "&cПроизошла внутренняя ошибка. Свяжитесь с администратором.",
+  "vouch.error.database": "&cНе удалось подключиться к базе данных. Попробуйте позже.",
+  
+  "vouch.ui.click_to_fill": "&7Нажмите, чтобы подставить &f{command}",
+  
+  "vouch.auth.password.changed": "&aПароль изменён.",
+  "vouch.auth.password.wrong_current": "&cЭто не ваш текущий пароль.",
+  "vouch.auth.password.unchanged": "&cНовый пароль должен отличаться от текущего.",
+  
+  "vouch.admin.user.password_reset": "&aПароль сброшен для &6{player}&a.",
+  "vouch.admin.user.info.header": "&6Аккаунт: &f{player}",
+  "vouch.admin.user.info.uuid": "&7  UUID: &f{value}",
+  "vouch.admin.user.info.2fa": "&7  Двухфакторная защита: &f{value}",
+  "vouch.admin.user.info.last_login": "&7  Последний вход: &f{value}",
+  "vouch.admin.user.info.last_ip": "&7  Последний адрес: &f{value}",
+  "vouch.admin.user.info.premium": "&7  Автовход premium: &f{value}",
+  "vouch.value.yes": "да",
+  "vouch.value.no": "нет",
+  "vouch.value.never": "никогда"
+}

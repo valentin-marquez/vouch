@@ -2,6 +2,7 @@ package com.nozz.vouch.auth;
 
 import com.nozz.vouch.config.VouchConfigManager;
 import com.nozz.vouch.db.DatabaseManager;
+import com.nozz.vouch.util.PlayerIps;
 import com.nozz.vouch.util.QRMapRenderer;
 import com.nozz.vouch.util.SessionTokenGenerator;
 import com.nozz.vouch.util.UXManager;
@@ -66,7 +67,7 @@ public final class AuthManager {
         UUID uuid = player.getUuid();
         activeSessions.remove(uuid);
 
-        String ip = getPlayerIP(player);
+        String ip = PlayerIps.of(player).orElse(null);
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         
         session.setOriginalAllowFlight(player.getAbilities().allowFlying);
@@ -111,7 +112,7 @@ public final class AuthManager {
      */
     public void authenticateFromSession(ServerPlayerEntity player) {
         UUID uuid = player.getUuid();
-        String ip = getPlayerIP(player);
+        String ip = PlayerIps.of(player).orElse(null);
 
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         session.markAuthenticated();
@@ -126,16 +127,17 @@ public final class AuthManager {
      */
     public void authenticateAsPremium(ServerPlayerEntity player) {
         UUID uuid = player.getUuid();
-        String ip = getPlayerIP(player);
+        String ip = PlayerIps.of(player).orElse(null);
 
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         session.setPremiumVerified(true);
         session.markAuthenticated();
         activeSessions.put(uuid, session);
 
-        if (VouchConfigManager.getInstance().isSessionPersistenceEnabled()) {
-            createPersistentSession(uuid, ip);
-        }
+        // Deliberately no persistent session: this player proved ownership of
+        // the account cryptographically during login and will do so again next
+        // time. Storing address-trust evidence for them would only add a way in
+        // for whoever shares their address.
 
         LOGGER.info("Player {} authenticated via premium auto-login", player.getName().getString());
     }
@@ -148,7 +150,7 @@ public final class AuthManager {
         UUID uuid = player.getUuid();
         activeSessions.remove(uuid);
 
-        String ip = getPlayerIP(player);
+        String ip = PlayerIps.of(player).orElse(null);
         PlayerSession session = new PlayerSession(uuid, player.getName().getString(), ip);
         session.setPremiumVerified(true);
         session.setAwaiting2FA(true);
@@ -162,9 +164,37 @@ public final class AuthManager {
     }
 
     /**
+     * A restored session got the player this far, but the account has a second
+     * factor and a session is not one. Jails them owing only the code.
+     */
+    public void addPendingForSession2FA(ServerPlayerEntity player) {
+        UUID uuid = player.getUuid();
+        activeSessions.remove(uuid);
+
+        PlayerSession session = new PlayerSession(uuid, player.getName().getString(),
+                PlayerIps.of(player).orElse(null));
+        session.setAwaiting2FA(true);
+        session.setOriginalAllowFlight(player.getAbilities().allowFlying);
+
+        pendingSessions.put(uuid, session);
+
+        PreAuthManager.getInstance().startPreAuthPremium2FA(player, session);
+
+        LOGGER.debug("Player {} restored a session and still owes a 2FA code",
+                player.getName().getString());
+    }
+
+    /**
      * Create a persistent session in the database
      */
     private void createPersistentSession(UUID uuid, String ip) {
+        // The address is the whole of what a session later proves. With no
+        // address there is nothing to bind to and nothing to check on return,
+        // so no session is worth storing.
+        if (ip == null) {
+            LOGGER.debug("No resolvable address for {}; not storing a session", uuid);
+            return;
+        }
         VouchConfigManager config = VouchConfigManager.getInstance();
         String token = SessionTokenGenerator.generateToken();
         String tokenHash = SessionTokenGenerator.hashToken(token);
@@ -252,9 +282,11 @@ public final class AuthManager {
     /**
      * Check if a player has a valid persistent session (Phase 4).
      * 
-     * Respects session.bind_to_ip config:
-     * - If true: Validates session for specific UUID + IP combination
-     * - If false: Validates session for UUID only (any IP allowed)
+     * A session is always bound to the address it was created from. The address
+     * is the only evidence a stored session carries: on an offline-mode server
+     * the UUID is derived from the username, so it proves nothing on its own.
+     * The former session.bind_to_ip = false mode, which checked the UUID alone,
+     * therefore authenticated anyone who knew a username, and is gone.
      * 
      * @param uuid Player UUID
      * @param ip Player's current IP address
@@ -265,14 +297,6 @@ public final class AuthManager {
         
         if (!config.isSessionPersistenceEnabled()) {
             return CompletableFuture.completedFuture(false);
-        }
-        
-        // If bind_to_ip is disabled, use a wildcard approach
-        // We still validate by IP since that's how sessions are stored,
-        // but we could extend DatabaseManager to support IP-less validation
-        if (!config.isSessionBindToIp()) {
-            // For simplicity, when bind_to_ip is false, we validate any existing session for this UUID
-            return DatabaseManager.getInstance().hasAnyValidSession(uuid);
         }
         
         return DatabaseManager.getInstance().validateSession(uuid, ip);
@@ -298,25 +322,6 @@ public final class AuthManager {
                 });
     }
 
-    private String getPlayerIP(ServerPlayerEntity player) {
-        try {
-            var address = player.networkHandler.getConnectionAddress();
-            if (address != null) {
-                String ip = address.toString();
-                if (ip.startsWith("/")) {
-                    ip = ip.substring(1);
-                }
-                int colonIndex = ip.lastIndexOf(':');
-                if (colonIndex > 0) {
-                    ip = ip.substring(0, colonIndex);
-                }
-                return ip;
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Could not get IP for player {}", player.getName().getString());
-        }
-        return "unknown";
-    }
 
     public void shutdown() {
         pendingSessions.clear();

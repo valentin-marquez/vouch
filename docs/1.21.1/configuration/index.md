@@ -42,8 +42,7 @@ password_max_length = 64
 [session]
 persistence = true
 duration = 3600
-bind_to_ip = true
-bind_to_uuid = true
+require_2fa_on_restore = true
 cleanup_interval = 300
 
 # TOTP (2FA)

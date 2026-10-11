@@ -95,5 +95,22 @@
   "vouch.command.disabled.password": "&cLa autenticación por contraseña está deshabilitada en este servidor.",
   
   "vouch.error.internal": "&cOcurrió un error interno. Contacta a un administrador.",
-  "vouch.error.database": "&cNo se pudo conectar a la base de datos. Intenta más tarde."
+  "vouch.error.database": "&cNo se pudo conectar a la base de datos. Intenta más tarde.",
+  
+  "vouch.ui.click_to_fill": "&7Haz clic para escribir &f{command}",
+  
+  "vouch.auth.password.changed": "&aContraseña cambiada.",
+  "vouch.auth.password.wrong_current": "&cEsa no es tu contraseña actual.",
+  "vouch.auth.password.unchanged": "&cLa nueva contraseña debe ser distinta de la actual.",
+  
+  "vouch.admin.user.password_reset": "&aContraseña restablecida para &6{player}&a.",
+  "vouch.admin.user.info.header": "&6Cuenta: &f{player}",
+  "vouch.admin.user.info.uuid": "&7  UUID: &f{value}",
+  "vouch.admin.user.info.2fa": "&7  Doble factor: &f{value}",
+  "vouch.admin.user.info.last_login": "&7  Último acceso: &f{value}",
+  "vouch.admin.user.info.last_ip": "&7  Última dirección: &f{value}",
+  "vouch.admin.user.info.premium": "&7  Acceso automático premium: &f{value}",
+  "vouch.value.yes": "sí",
+  "vouch.value.no": "no",
+  "vouch.value.never": "nunca"
 }

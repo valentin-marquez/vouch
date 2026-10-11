@@ -11,13 +11,11 @@ Works on Fabric and NeoForge — no client mod required.
 
 | Minecraft        | Branch     | Status        |
 |------------------|------------|---------------|
-| 1.21.1           | mc/1.21.1  | ✅ Released    |
-| 1.21.2 – 1.21.3 | mc/1.21.2  | ✅ Released     |
-| 1.21.4           | mc/1.21.4  | ✅ Released      |
-| 1.21.5           | mc/1.21.5  | ✅ Released    |
-| 1.21.6 – 1.21.8 | mc/1.21.6  | ✅ Released    |
-| 1.21.9 – 1.21.10| mc/1.21.9  | ⬜ Planned     |
-| 1.21.11          | mc/1.21.11 | ⬜ Planned     |
+| 1.21.1           | mc/1.21.1  | ✅ Maintained  |
+| 1.21.2 – 1.21.3 | mc/1.21.2  | 🧊 Legacy (0.2.0) |
+| 1.21.4           | mc/1.21.4  | 🧊 Legacy (0.2.0) |
+| 1.21.5           | mc/1.21.5  | 🧊 Legacy (0.2.0) |
+| 1.21.6 – 1.21.8 | mc/1.21.6  | 🧊 Legacy (0.2.0) |
 
 
 ---

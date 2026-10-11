@@ -6,6 +6,9 @@
   "server": [
     "ServerPlayerEntityMixin",
     "ServerPlayNetworkHandlerMixin",
+    "ServerLoginNetworkHandlerMixin",
+    "PreAuthCommandMixin",
+    "PreAuthInventoryMixin",
     "PlayerInteractionMixin",
     "EntityDamageMixin"
   ],

@@ -42,55 +42,27 @@ public final class VouchNeoForge {
      * Register all Vouch permission nodes with NeoForge's PermissionAPI.
      */
     private void onRegisterPermissionNodes(PermissionGatherEvent.Nodes event) {
-        // User commands - default to all players (true)
-        registerNode(event, PermissionHelper.Nodes.REGISTER, true);
-        registerNode(event, PermissionHelper.Nodes.LOGIN, true);
-        registerNode(event, PermissionHelper.Nodes.LOGOUT, true);
-        
-        // 2FA commands - default to all authenticated players (true)
-        registerNode(event, PermissionHelper.Nodes.TWO_FA_SETUP, true);
-        registerNode(event, PermissionHelper.Nodes.TWO_FA_VERIFY, true);
-        registerNode(event, PermissionHelper.Nodes.TWO_FA_DISABLE, true);
-        registerNode(event, PermissionHelper.Nodes.TWO_FA_STATUS, true);
-        
-        // Admin commands - default to OPs only (false for non-OPs)
-        registerNodeOpOnly(event, PermissionHelper.Nodes.ADMIN_RELOAD);
-        registerNodeOpOnly(event, PermissionHelper.Nodes.ADMIN_UNREGISTER);
-        registerNodeOpOnly(event, PermissionHelper.Nodes.ADMIN_EXPORT_LANG);
-        
-        // Special permissions - default to OPs only
-        registerNodeOpOnly(event, PermissionHelper.Nodes.BYPASS_AUTH);
+        // Walk the single node table instead of hand-listing them here. Two
+        // nodes used to be missing from this method, so LuckPerms grants for
+        // them were honoured on Fabric and silently ignored on NeoForge.
+        PermissionHelper.Nodes.all().forEach(node -> registerNode(event, node));
     }
 
     /**
-     * Register a permission node with a default value.
+     * Register one permission node, falling back to its declared OP level when
+     * no permission provider is installed.
+     *
+     * A node declared EXPLICIT_GRANT_ONLY sits above every vanilla OP level, so
+     * this resolver can never satisfy it — which is the point for
+     * {@code vouch.bypass.auth}: being an operator must not skip authentication.
      */
-    private void registerNode(PermissionGatherEvent.Nodes event, String nodeName, boolean defaultValue) {
+    private void registerNode(PermissionGatherEvent.Nodes event, PermissionHelper.Node vouchNode) {
         PermissionNode<Boolean> node = new PermissionNode<>(
                 VouchMod.MOD_ID,
-                nodeName.replace("vouch.", ""),
+                vouchNode.id().replace("vouch.", ""),
                 PermissionTypes.BOOLEAN,
-                (player, uuid, context) -> defaultValue
-        );
-        event.addNodes(node);
-        PermissionHelperImpl.registerNode(node);
-    }
-
-    /**
-     * Register a permission node that defaults to true only for OPs.
-     */
-    private void registerNodeOpOnly(PermissionGatherEvent.Nodes event, String nodeName) {
-        PermissionNode<Boolean> node = new PermissionNode<>(
-                VouchMod.MOD_ID,
-                nodeName.replace("vouch.", ""),
-                PermissionTypes.BOOLEAN,
-                (player, uuid, context) -> {
-                    // Default resolver: only allow for OPs
-                    if (player != null && player.getServer() != null) {
-                        return player.getServer().getPlayerManager().isOperator(player.getGameProfile());
-                    }
-                    return false;
-                }
+                (player, uuid, context) -> player != null
+                        && player.hasPermissionLevel(vouchNode.defaultOpLevel())
         );
         event.addNodes(node);
         PermissionHelperImpl.registerNode(node);

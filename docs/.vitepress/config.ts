@@ -81,14 +81,14 @@ export default defineConfig({
       { text: 'Home', link: '/' },
       {
         text: 'Docs',
-        link: '/1.21.4/',
+        link: '/1.21.1/',
       },
       {
-        text: '1.21.4',
+        text: '1.21.1',
         items: [
-          { text: '1.21.4', link: '/1.21.4/' },
-          { text: '1.21.2-1.21.3', link: '/1.21.2/' },
           { text: '1.21.1', link: '/1.21.1/' },
+          { text: '1.21.4 (legacy)', link: '/1.21.4/' },
+          { text: '1.21.2-1.21.3 (legacy)', link: '/1.21.2/' },
         ]
       },
       { text: 'Changelog', link: '/changelog' },

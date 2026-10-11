@@ -33,10 +33,14 @@ Vouch uses a permission system that integrates with both Fabric and NeoForge per
 
 | Permission | Default | Description |
 |------------|---------|-------------|
-| `vouch.bypass.auth` | OP level 4 | Bypass authentication entirely |
+| `vouch.bypass.auth` | Explicit grant only | Bypass authentication entirely |
 
 ::: warning
-The `vouch.bypass.auth` permission should only be granted to trusted accounts or service accounts. Players with this permission will never be asked to authenticate.
+The `vouch.bypass.auth` permission cannot be satisfied by an operator level. It requires an explicit grant from a permission provider such as LuckPerms.
+
+That is deliberate: on an offline-mode server `ops.json` matches the offline UUID derived from a username, which is exactly the UUID a cracked client gets by joining under an operator's name. Falling back to an OP level would have handed the bypass to anyone who typed an operator's name.
+
+On an offline-mode server the holder must **also** connect through Vouch's premium login, so they arrive with their online UUID. Grant it only to accounts you would trust with the server.
 :::
 
 ---
@@ -67,7 +71,7 @@ This is compatible with:
 When no permission mod is installed, Vouch falls back to **vanilla OP levels**:
 - Player commands: OP level 0 (all players)
 - Admin commands: OP level 4
-- `vouch.bypass.auth`: OP level 4
+- `vouch.bypass.auth`: never granted by fallback — explicit grant only
 
 ---
 

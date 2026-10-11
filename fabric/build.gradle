@@ -19,6 +19,8 @@ configurations {
     shadowBundle {
         canBeResolved = true
         canBeConsumed = false
+        // The platform provides SLF4J at runtime; bundling it causes a split-package crash.
+        exclude group: 'org.slf4j'
     }
 }
 
@@ -72,8 +74,11 @@ shadowJar {
     relocate 'com.electronwill.nightconfig', 'com.nozz.vouch.libs.nightconfig'
     relocate 'org.postgresql', 'com.nozz.vouch.libs.postgresql'
     relocate 'com.mysql', 'com.nozz.vouch.libs.mysql'
+    relocate 'org.checkerframework', 'com.nozz.vouch.libs.checkerframework'
 }
 
 remapJar {
     inputFile.set shadowJar.archiveFile
 }
+
+apply from: rootProject.file('gradle/shadow-sanitization.gradle')

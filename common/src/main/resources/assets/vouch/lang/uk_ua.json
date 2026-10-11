@@ -1,0 +1,116 @@
+{
+  "_comment": "Vouch Authentication Mod - Ukrainian Language File",
+  "_version": "0.1.0",
+  
+  "vouch.auth.welcome.unregistered": "&6Ласкаво просимо! Будь ласка, зареєструйтеся: &f/register <пароль> <пароль>",
+  "vouch.auth.welcome.registered": "&6З поверненням! Будь ласка, увійдіть: &f/login <пароль>",
+  "vouch.auth.welcome.2fa_only.unregistered": "&6Ласкаво просимо! Використовуйте &f/register &6для налаштування 2FA",
+  "vouch.auth.welcome.2fa_only.registered": "&6З поверненням! Використовуйте: &f/login <код> &6із вашого додатка",
+  
+  "vouch.auth.login.success": "&aВхід виконано! З поверненням.",
+  "vouch.auth.login.wrong_password": "&cНевірний пароль!",
+  "vouch.auth.login.too_many_attempts": "&cЗабагато невдалих спроб! Будь ласка, зачекайте.",
+  "vouch.auth.login.locked_out": "&cАкаунт заблоковано. Спробуйте знову через {time} сек.",
+  
+  "vouch.auth.register.success": "&aРеєстрація завершена! Ви увійшли в систему.",
+  "vouch.auth.register.success_2fa": "&aРеєстрація завершена! Відскануйте QR-код для завершення налаштування.",
+  "vouch.auth.register.password_mismatch": "&cПаролі не збігаються! Спробуйте ще раз.",
+  "vouch.auth.register.password_too_short": "&cПароль занадто короткий! Мінімум символів: {min}.",
+  "vouch.auth.register.password_too_long": "&cПароль занадто довгий! Максимум символів: {max}.",
+  "vouch.auth.register.already_registered": "&cВи вже зареєстровані! Використовуйте /login.",
+  
+  "vouch.auth.not_registered": "&cВи не зареєстровані! Спочатку використайте /register.",
+  "vouch.auth.already_logged_in": "&eВи вже увійшли в систему!",
+  "vouch.auth.timeout": "Час очікування авторизації вичерпано. Перепідключіться до сервера.",
+  "vouch.auth.session_restored": "&aСесію відновлено! З поверненням.",
+  "vouch.auth.session_expired": "&cЧас дії сесії вичерпано. Будь ласка, увійдіть знову.",
+  
+  "vouch.auth.premium.auto_login": "&aЛіцензійний акаунт підтверджено. Авто-вхід виконано!",
+  "vouch.auth.premium.require_2fa": "&aЛіцензійний акаунт підтверджено. &eПройдіть 2FA: &f/2fa verify <код>",
+  
+  "vouch.auth.logout.success": "&eВи вийшли із системи. Сесію анульовано.",
+  "vouch.auth.logout.kick": "Ви вийшли із системи. Будь ласка, перепідключіться для авторизації.",
+  
+  "vouch.jail.chat_blocked": "&cВи не можете писати в чат до авторизації!",
+  "vouch.jail.action_blocked": "&cВи не можете робити це до авторизації!",
+  "vouch.jail.command_blocked": "&cЗараз ви можете використовувати тільки команди авторизації!",
+  "vouch.jail.processing": "&7Обробка...",
+  
+  "vouch.2fa.required": "&eУвімкнено двофакторну автентифікацію. Використовуйте: &f/2fa verify <код>",
+  "vouch.2fa.setup.instructions": "&eВідскануйте QR-код у додатку, потім використайте: &f/2fa verify <код>",
+  "vouch.2fa.setup.manual_secret": "&7Код для ручного введення: &b{secret}",
+  "vouch.2fa.setup.failed": "&cНе вдалося створити QR-код. Спробуйте ще раз.",
+  "vouch.2fa.enabled": "&a2FA успішно увімкнено!",
+  "vouch.2fa.disabled": "&e2FA вимкнено.",
+  "vouch.2fa.invalid_code": "&cНевірний код 2FA. Спробуйте ще раз.",
+  "vouch.2fa.already_enabled": "&e2FA вже увімкнено! Використовуйте &f/2fa disable <код>&e, щоб спочатку вимкнути її.",
+  "vouch.2fa.not_enabled": "&e2FA не увімкнено. Використовуйте &f/2fa setup&e для налаштування.",
+  "vouch.2fa.nothing_pending": "&eНемає активних запитів на 2FA. Використовуйте &f/2fa setup&e для початку.",
+  "vouch.2fa.status.enabled": "&7Статус 2FA: &aУВІМКНЕНО",
+  "vouch.2fa.status.disabled": "&7Статус 2FA: &cВИМКНЕНО &7- використовуйте /2fa setup для увімкнення",
+  "vouch.2fa.must_login_first": "&cСпочатку необхідно увійти в систему!",
+  "vouch.2fa.required_for_ops": "&eЯк оператор, ви зобов'язані увімкнути 2FA. Використовуйте: &f/2fa setup",
+  
+  "vouch.admin.player_unregistered": "&aРеєстрацію гравця &6{player}&a видалено.",
+  "vouch.admin.player_not_found": "&cГравця &6{player}&c не знайдено або не зареєстровано.",
+  "vouch.admin.player_2fa_reset": "&a2FA для гравця &6{player}&a скинуто.",
+  "vouch.admin.config_reloaded": "&aКонфігурацію успішно перезавантажено!",
+  "vouch.admin.lang_exported": "&aМовний файл експортовано в: &f{path}",
+  "vouch.admin.database_error": "&cПомилка бази даних. Перевірте логи сервера.",
+  "vouch.admin.no_permission": "&cУ вас немає прав на використання цієї команди.",
+  
+  "vouch.ui.title.welcome": "&6Потрібна авторизація",
+  "vouch.ui.title.login_success": "&a✓ З поверненням!",
+  "vouch.ui.title.register_success": "&a✓ Зареєстровано!",
+  "vouch.ui.title.wrong_password": "&c✗ Невірний пароль",
+  "vouch.ui.title.2fa_success": "&a✓ 2FA підтверджено!",
+  "vouch.ui.title.premium_login": "&a✓ Ліцензію підтверджено!",
+  
+  "vouch.ui.subtitle.unregistered": "&eВикористовуйте &f/register &eдля початку",
+  "vouch.ui.subtitle.registered": "&eВикористовуйте &f/login &eдля продовження",
+  "vouch.ui.subtitle.2fa_only.unregistered": "&eВикористовуйте &f/register &eдля налаштування 2FA",
+  "vouch.ui.subtitle.2fa_only.registered": "&eВведіть 6-значний код із додатка",
+  "vouch.ui.subtitle.login_success": "&7Ви увійшли в систему",
+  "vouch.ui.subtitle.register_success": "&7Ваш акаунт створено",
+  "vouch.ui.subtitle.wrong_password": "&7Спробуйте ще раз",
+  "vouch.ui.subtitle.premium_login": "&7Авто-вхід виконано",
+  "vouch.ui.subtitle.premium_2fa": "&7Пройдіть 2FA для продовження",
+  
+  "vouch.ui.actionbar.pre_auth": "&e⏳ Залишилося часу: &f{time}с &8| &e/login або /register",
+  "vouch.ui.actionbar.pre_auth_2fa_only": "&e⏳ Залишилося часу: &f{time}с &8| &e/register або /login <код>",
+  "vouch.ui.actionbar.awaiting_2fa": "&6🔐 Введіть код 2FA: &f/2fa verify <код>",
+  "vouch.ui.actionbar.rate_limited": "&c⏰ Забагато спроб. Зачекайте &f{time}с",
+  
+  "vouch.ui.bossbar.text": "&e🔒 Потрібна авторизація - залишилося {time}с",
+  "vouch.ui.bossbar.awaiting_2fa": "&6🔐 Потрібне підтвердження 2FA",
+  
+  "vouch.command.usage.register": "&eВикористання: &f/register <пароль> <підтвердження>",
+  "vouch.command.usage.register_2fa": "&eВикористання: &f/register &7(створює QR-код для 2FA)",
+  "vouch.command.usage.login": "&eВикористання: &f/login <пароль>",
+  "vouch.command.usage.login_2fa": "&eВикористання: &f/login <код_2fa>",
+  "vouch.command.usage.2fa_verify": "&eВикористання: &f/2fa verify <код>",
+  "vouch.command.usage.2fa_disable": "&eВикористання: &f/2fa disable <код>",
+  
+  "vouch.command.disabled.2fa": "&cДвофакторну автентифікацію вимкнено на цьому сервері.",
+  "vouch.command.disabled.password": "&cАвторизацію за паролем вимкнено на цьому сервері.",
+  
+  "vouch.error.internal": "&cСталася внутрішня помилка. Зв'яжіться з адміністратором.",
+  "vouch.error.database": "&cНе вдалося підключитися до бази даних. Спробуйте пізніше.",
+  
+  "vouch.ui.click_to_fill": "&7Натисніть, щоб підставити &f{command}",
+  
+  "vouch.auth.password.changed": "&aПароль змінено.",
+  "vouch.auth.password.wrong_current": "&cЦе не ваш поточний пароль.",
+  "vouch.auth.password.unchanged": "&cНовий пароль має відрізнятися від поточного.",
+  
+  "vouch.admin.user.password_reset": "&aПароль скинуто для &6{player}&a.",
+  "vouch.admin.user.info.header": "&6Обліковий запис: &f{player}",
+  "vouch.admin.user.info.uuid": "&7  UUID: &f{value}",
+  "vouch.admin.user.info.2fa": "&7  Двофакторний захист: &f{value}",
+  "vouch.admin.user.info.last_login": "&7  Останній вхід: &f{value}",
+  "vouch.admin.user.info.last_ip": "&7  Остання адреса: &f{value}",
+  "vouch.admin.user.info.premium": "&7  Автовхід premium: &f{value}",
+  "vouch.value.yes": "так",
+  "vouch.value.no": "ні",
+  "vouch.value.never": "ніколи"
+}
