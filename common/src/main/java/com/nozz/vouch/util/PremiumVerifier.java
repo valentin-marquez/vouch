@@ -310,7 +310,7 @@ public final class PremiumVerifier {
         }
 
         LOGGER.info("Session verified for {} (UUID: {}, {} profile properties)",
-                profile.get().getName(), profile.get().getId(), profile.get().getProperties().size());
+                profile.get().name(), profile.get().id(), profile.get().properties().size());
         return SessionResult.verified(profile.get());
     }
 

@@ -47,5 +47,5 @@ tasks.register('verifyShadowJarSanitized') {
     }
 }
 
-tasks.named('remapJar') { dependsOn tasks.named('verifyShadowJarSanitized') }
+tasks.named('assemble') { dependsOn tasks.named('verifyShadowJarSanitized') }
 tasks.named('check') { dependsOn tasks.named('verifyShadowJarSanitized') }

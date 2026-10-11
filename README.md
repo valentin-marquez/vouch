@@ -11,6 +11,7 @@ Works on Fabric and NeoForge — no client mod required.
 
 | Minecraft        | Branch     | Status        |
 |------------------|------------|---------------|
+| 26.2             | mc/26.2    | 🚧 In progress |
 | 1.21.1           | mc/1.21.1  | ✅ Maintained  |
 | 1.21.2 – 1.21.3 | mc/1.21.2  | 🧊 Legacy (0.2.0) |
 | 1.21.4           | mc/1.21.4  | 🧊 Legacy (0.2.0) |

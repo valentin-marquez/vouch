@@ -322,8 +322,8 @@ public final class Messages {
         }
         Component hover = LangManager.getInstance().getText(ChatSuggestion.HOVER_KEY, "command", command);
         return message.copy().withStyle(style -> style
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+                .withClickEvent(new ClickEvent.SuggestCommand(command))
+                .withHoverEvent(new HoverEvent.ShowText(hover)));
     }
 
     /**

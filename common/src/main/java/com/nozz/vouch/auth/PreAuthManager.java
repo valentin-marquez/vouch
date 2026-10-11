@@ -118,7 +118,7 @@ public final class PreAuthManager {
         // Slowness
         if (config.getSlownessLevel() > 0) {
             player.addEffect(new MobEffectInstance(
-                MobEffects.MOVEMENT_SLOWDOWN, -1, config.getSlownessLevel() - 1, 
+                MobEffects.SLOWNESS, -1, config.getSlownessLevel() - 1, 
                 false, false, false
             ));
         }
@@ -137,7 +137,7 @@ public final class PreAuthManager {
      */
     private void hideFromTabList(ServerPlayer player) {
         try {
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server != null) {
                 var packet = new ClientboundPlayerInfoRemovePacket(List.of(player.getUUID()));
                 // Send to all other players
@@ -157,7 +157,7 @@ public final class PreAuthManager {
      */
     private void showInTabList(ServerPlayer player) {
         try {
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server != null) {
                 var packet = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, player);
                 server.getPlayerList().broadcastAll(packet);
@@ -325,7 +325,7 @@ public final class PreAuthManager {
         QRMapRenderer.removeQRMap(player);
 
         player.removeEffect(MobEffects.BLINDNESS);
-        player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        player.removeEffect(MobEffects.SLOWNESS);
         player.removeEffect(MobEffects.INVISIBILITY);
 
         PlayerSession session = AuthManager.getInstance().getSession(uuid);

@@ -25,16 +25,16 @@ configurations {
 }
 
 dependencies {
-    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
+    implementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
 
-    modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
+    implementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
 
-    modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
+    implementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
 
     // Fabric Permissions API - compatibility with LuckPerms, FTB Ranks, etc.
-    modImplementation "maven.modrinth:fabric-permissions-api:0.3.3"
+    implementation "maven.modrinth:fabric-permissions-api:0.7.0"
 
-    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    common(project(path: ':common')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 
     def vouchLibs = [
@@ -65,7 +65,10 @@ processResources {
 
 shadowJar {
     configurations = [project.configurations.shadowBundle]
-    archiveClassifier = 'dev-shadow'
+    dependsOn jar
+    mainSpec.sourcePaths.clear()
+    from(zipTree(jar.archiveFile))
+    archiveClassifier = null
 
     relocate 'org.bouncycastle', 'com.nozz.vouch.libs.bc'
     relocate 'com.google.zxing', 'com.nozz.vouch.libs.zxing'
@@ -77,8 +80,11 @@ shadowJar {
     relocate 'org.checkerframework', 'com.nozz.vouch.libs.checkerframework'
 }
 
-remapJar {
-    inputFile.set shadowJar.archiveFile
+// The raw module jar feeds shadowJar, which is the distributable artifact.
+jar {
+    archiveClassifier = 'raw'
 }
+
+assemble.dependsOn shadowJar
 
 apply from: rootProject.file('gradle/shadow-sanitization.gradle')

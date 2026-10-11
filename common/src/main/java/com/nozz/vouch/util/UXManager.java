@@ -18,7 +18,8 @@ import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -202,6 +203,7 @@ public final class UXManager {
 
         LangManager lang = LangManager.getInstance();
         ServerBossEvent bossBar = new ServerBossEvent(
+                UUID.randomUUID(),
                 formatText(lang.get("vouch.ui.bossbar.text", "time", totalSeconds)),
                 parseBossBarColor(config.getBossBarColor()),
                 parseBossBarStyle(config.getBossBarStyle()));
@@ -288,15 +290,18 @@ public final class UXManager {
             return;
 
         try {
-            ResourceLocation id = ResourceLocation.parse(soundId);
-            SoundEvent sound = BuiltInRegistries.SOUND_EVENT.get(id);
+            Identifier id = Identifier.parse(soundId);
+            SoundEvent sound = BuiltInRegistries.SOUND_EVENT.getValue(id);
 
             if (sound != null) {
-                player.playNotifySound(
-                        sound,
+                // Sent to this player only; Entity#playSound would broadcast to everyone nearby.
+                player.connection.send(new ClientboundSoundPacket(
+                        BuiltInRegistries.SOUND_EVENT.wrapAsHolder(sound),
                         SoundSource.MASTER,
+                        player.getX(), player.getY(), player.getZ(),
                         config.getSoundVolume(),
-                        config.getSoundPitch());
+                        config.getSoundPitch(),
+                        player.getRandom().nextLong()));
             } else {
                 LOGGER.warn("Sound not found: {}", soundId);
             }
@@ -367,14 +372,14 @@ public final class UXManager {
     public void sendMessage(ServerPlayer player, String message) {
         VouchConfigManager config = VouchConfigManager.getInstance();
         String prefixed = config.getBrandingPrefix() + message;
-        player.displayClientMessage(formatText(prefixed), false);
+        player.sendSystemMessage(formatText(prefixed));
     }
 
     /**
      * Send a raw formatted message (no prefix)
      */
     public void sendRawMessage(ServerPlayer player, String message) {
-        player.displayClientMessage(formatText(message), false);
+        player.sendSystemMessage(formatText(message));
     }
 
     /**
@@ -419,13 +424,13 @@ public final class UXManager {
      */
     private void clearChat(ServerPlayer player) {
         for (int i = 0; i < 100; i++) {
-            player.displayClientMessage(Component.empty(), false);
+            player.sendSystemMessage(Component.empty());
         }
     }
 
     private void addPadding(ServerPlayer player, int lines) {
         for (int i = 0; i < lines; i++) {
-            player.displayClientMessage(Component.empty(), false);
+            player.sendSystemMessage(Component.empty());
         }
     }
 

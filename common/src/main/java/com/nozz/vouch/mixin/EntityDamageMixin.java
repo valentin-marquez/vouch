@@ -1,6 +1,7 @@
 package com.nozz.vouch.mixin;
 
 import com.nozz.vouch.auth.AuthManager;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,8 +20,8 @@ public abstract class EntityDamageMixin {
     /**
      * Block all damage to unauthenticated players
      */
-    @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
-    private void vouch$onDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "hurtServer", at = @At("HEAD"), cancellable = true)
+    private void vouch$onDamage(ServerLevel level, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         ServerPlayer self = (ServerPlayer) (Object) this;
         
         if (!AuthManager.getInstance().isAuthenticated(self)) {

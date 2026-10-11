@@ -46,21 +46,21 @@ class MojangSessionParserTest {
     void parsesUndashedUuidIntoStandardUuid() {
         GameProfile profile = MojangSessionParser.parseProfile(sessionResponseWithTextures(), true).orElseThrow();
 
-        assertEquals(UUID.fromString("4566e69f-c907-48ee-8d71-d7ba5aa00d20"), profile.getId());
+        assertEquals(UUID.fromString("4566e69f-c907-48ee-8d71-d7ba5aa00d20"), profile.id());
     }
 
     @Test
     void parsesPlayerName() {
         GameProfile profile = MojangSessionParser.parseProfile(sessionResponseWithTextures(), true).orElseThrow();
 
-        assertEquals("Thinkofdeath", profile.getName());
+        assertEquals("Thinkofdeath", profile.name());
     }
 
     @Test
     void attachesSignedTexturesPropertyWhenSkinFetchingIsEnabled() {
         GameProfile profile = MojangSessionParser.parseProfile(sessionResponseWithTextures(), true).orElseThrow();
 
-        Collection<Property> textures = profile.getProperties().get("textures");
+        Collection<Property> textures = profile.properties().get("textures");
         assertEquals(1, textures.size());
         Property texture = textures.iterator().next();
         assertEquals("textures", texture.name());
@@ -72,7 +72,7 @@ class MojangSessionParserTest {
     void omitsTexturesPropertyWhenSkinFetchingIsDisabled() {
         GameProfile profile = MojangSessionParser.parseProfile(sessionResponseWithTextures(), false).orElseThrow();
 
-        assertTrue(profile.getProperties().isEmpty(),
+        assertTrue(profile.properties().isEmpty(),
                 "skin fetching is off, so no textures should reach the profile");
     }
 
@@ -90,7 +90,7 @@ class MojangSessionParserTest {
 
         GameProfile profile = MojangSessionParser.parseProfile(json, true).orElseThrow();
 
-        Property texture = profile.getProperties().get("textures").iterator().next();
+        Property texture = profile.properties().get("textures").iterator().next();
         assertNull(texture.signature());
     }
 
@@ -102,8 +102,8 @@ class MojangSessionParserTest {
 
         GameProfile profile = MojangSessionParser.parseProfile(json, true).orElseThrow();
 
-        assertEquals("Thinkofdeath", profile.getName());
-        assertTrue(profile.getProperties().isEmpty());
+        assertEquals("Thinkofdeath", profile.name());
+        assertTrue(profile.properties().isEmpty());
     }
 
     @Test

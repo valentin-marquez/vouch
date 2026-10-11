@@ -177,7 +177,7 @@ public final class VouchCommands {
         AuthManager authManager = AuthManager.getInstance();
 
         if (authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.alreadyLoggedIn(), false);
+            player.sendSystemMessage(Messages.alreadyLoggedIn());
             return 0;
         }
 
@@ -193,7 +193,7 @@ public final class VouchCommands {
 
         // Validate password match
         if (!password.equals(confirmPassword)) {
-            player.displayClientMessage(Messages.passwordMismatch(), false);
+            player.sendSystemMessage(Messages.passwordMismatch());
             if (session != null)
                 session.recordFailedAttempt();
             return 0;
@@ -211,7 +211,7 @@ public final class VouchCommands {
         mod.onMain(db.isRegistered(player.getUUID()), "registration check for " + username, player, isRegistered -> {
             RegisteredNames.getInstance().setPresent(username, isRegistered);
             if (isRegistered) {
-                player.displayClientMessage(Messages.alreadyRegistered(), false);
+                player.sendSystemMessage(Messages.alreadyRegistered());
                 CommandVisibility.resend(player);
                 return;
             }
@@ -220,7 +220,7 @@ public final class VouchCommands {
                             .thenCompose(hash -> db.registerPlayer(player.getUUID(), username, hash)),
                     "registration of " + username, player, success -> {
                         if (!success) {
-                            player.displayClientMessage(Messages.databaseError(), false);
+                            player.sendSystemMessage(Messages.databaseError());
                             return;
                         }
                         RegisteredNames.getInstance().add(username);
@@ -255,7 +255,7 @@ public final class VouchCommands {
         DatabaseManager db = DatabaseManager.getInstance();
 
         if (authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.alreadyLoggedIn(), false);
+            player.sendSystemMessage(Messages.alreadyLoggedIn());
             return 0;
         }
 
@@ -271,7 +271,7 @@ public final class VouchCommands {
                 "registration check for " + username, player, isRegistered -> {
                     RegisteredNames.getInstance().setPresent(username, isRegistered);
                     if (isRegistered) {
-                        player.displayClientMessage(Messages.alreadyRegistered(), false);
+                        player.sendSystemMessage(Messages.alreadyRegistered());
                         CommandVisibility.resend(player);
                         return;
                     }
@@ -289,12 +289,12 @@ public final class VouchCommands {
                     String otpAuthUri = TOTPEngine.generateOtpAuthUri(secret, username, issuer);
 
                     if (QRMapRenderer.sendQRCodeMap(player, otpAuthUri)) {
-                        player.displayClientMessage(Messages.twoFactorSetupInstructionsClickable(), false);
-                        player.displayClientMessage(Messages.twoFactorManualSecret(secret), false);
+                        player.sendSystemMessage(Messages.twoFactorSetupInstructionsClickable());
+                        player.sendSystemMessage(Messages.twoFactorManualSecret(secret));
                         CommandVisibility.resend(player);
                         LOGGER.info("2FA-only registration initiated for player {}", username);
                     } else {
-                        player.displayClientMessage(Messages.twoFactorSetupFailed(), false);
+                        player.sendSystemMessage(Messages.twoFactorSetupFailed());
                         LOGGER.error("Failed to send QR code to player {}", username);
                     }
                 });
@@ -329,7 +329,7 @@ public final class VouchCommands {
         AuthManager authManager = AuthManager.getInstance();
 
         if (authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.alreadyLoggedIn(), false);
+            player.sendSystemMessage(Messages.alreadyLoggedIn());
             return 0;
         }
 
@@ -392,7 +392,7 @@ public final class VouchCommands {
                                     },
                                     () -> {
                                         // Fail closed: no access on an unresolvable 2FA state.
-                                        player.displayClientMessage(Messages.databaseConnectionError(), false);
+                                        player.sendSystemMessage(Messages.databaseConnectionError());
                                         LOGGER.error("Refusing to authenticate {} - 2FA status unknown", username);
                                     });
                         });
@@ -415,10 +415,10 @@ public final class VouchCommands {
         String username = player.getName().getString();
 
         switch (outcome) {
-            case NOT_REGISTERED -> player.displayClientMessage(Messages.notRegisteredClickable(), false);
+            case NOT_REGISTERED -> player.sendSystemMessage(Messages.notRegisteredClickable());
 
             case CREDENTIALS_UNAVAILABLE -> {
-                player.displayClientMessage(Messages.databaseError(), false);
+                player.sendSystemMessage(Messages.databaseError());
                 LOGGER.error("Account {} exists but its password hash could not be read", username);
             }
 
@@ -429,14 +429,14 @@ public final class VouchCommands {
 
             case NEEDS_2FA -> {
                 authManager.require2FA(player);
-                player.displayClientMessage(Messages.twoFactorRequiredClickable(), false);
+                player.sendSystemMessage(Messages.twoFactorRequiredClickable());
                 CommandVisibility.resend(player);
                 LOGGER.debug("Player {} requires 2FA verification", username);
             }
 
             case AUTHENTICATED_MUST_SETUP_2FA -> {
                 authManager.authenticatePlayer(player);
-                player.displayClientMessage(Messages.twoFactorRequiredForOpsClickable(), false);
+                player.sendSystemMessage(Messages.twoFactorRequiredForOpsClickable());
                 recordLastLogin(db, player, ip);
                 CommandVisibility.resend(player);
                 LOGGER.info("OP {} logged in, 2FA setup required", username);
@@ -499,7 +499,7 @@ public final class VouchCommands {
         AuthManager authManager = AuthManager.getInstance();
 
         if (authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.alreadyLoggedIn(), false);
+            player.sendSystemMessage(Messages.alreadyLoggedIn());
             return 0;
         }
 
@@ -511,7 +511,7 @@ public final class VouchCommands {
         String code = StringArgumentType.getString(context, ARG_CODE).replaceAll("\\s+", "");
 
         if (!isValidTOTPCode(code)) {
-            player.displayClientMessage(Messages.twoFactorInvalidCode(), false);
+            player.sendSystemMessage(Messages.twoFactorInvalidCode());
             return 0;
         }
 
@@ -523,7 +523,7 @@ public final class VouchCommands {
         mod.onMain(db.isRegistered(player.getUUID()), "login lookup for " + username, player, isRegistered -> {
             RegisteredNames.getInstance().setPresent(username, isRegistered);
             if (!isRegistered) {
-                player.displayClientMessage(Messages.notRegisteredClickable(), false);
+                player.sendSystemMessage(Messages.notRegisteredClickable());
                 RateLimitDecision.forLogin(LoginOutcome.NOT_REGISTERED)
                         .applyTo(RateLimiter.getInstance(), ip);
                 return;
@@ -531,7 +531,7 @@ public final class VouchCommands {
 
             mod.onMain(db.getTOTPSecret(player.getUUID()), "2FA secret for " + username, player, secretOpt -> {
                 if (secretOpt.isEmpty()) {
-                    player.displayClientMessage(Messages.twoFactorNotEnabled(), false);
+                    player.sendSystemMessage(Messages.twoFactorNotEnabled());
                     return;
                 }
 
@@ -578,13 +578,13 @@ public final class VouchCommands {
         AuthManager authManager = AuthManager.getInstance();
 
         if (!authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.mustLoginFirstClickable(), false);
+            player.sendSystemMessage(Messages.mustLoginFirstClickable());
             return 0;
         }
 
         AuthMode mode = VouchConfigManager.getInstance().getAuthMode();
         if (!mode.usesPassword()) {
-            player.displayClientMessage(Messages.disabledPassword(), false);
+            player.sendSystemMessage(Messages.disabledPassword());
             return 0;
         }
 
@@ -597,7 +597,7 @@ public final class VouchCommands {
         String newPassword = StringArgumentType.getString(context, ARG_NEW_PASSWORD);
 
         if (oldPassword.equals(newPassword)) {
-            player.displayClientMessage(Messages.passwordUnchanged(), false);
+            player.sendSystemMessage(Messages.passwordUnchanged());
             return 0;
         }
 
@@ -612,7 +612,7 @@ public final class VouchCommands {
 
         mod.onMain(db.getPasswordHash(player.getUUID()), "password lookup for " + username, player, hashOptional -> {
             if (hashOptional.isEmpty()) {
-                player.displayClientMessage(Messages.databaseError(), false);
+                player.sendSystemMessage(Messages.databaseError());
                 return;
             }
 
@@ -620,7 +620,7 @@ public final class VouchCommands {
                     "password verification for " + username, player, valid -> {
                         RateLimitDecision.forPasswordChange(valid).applyTo(RateLimiter.getInstance(), ip);
                         if (!valid) {
-                            player.displayClientMessage(Messages.passwordWrongCurrent(), false);
+                            player.sendSystemMessage(Messages.passwordWrongCurrent());
                             LOGGER.warn("Failed password change for {} - wrong current password", username);
                             return;
                         }
@@ -629,10 +629,10 @@ public final class VouchCommands {
                                         .thenCompose(hash -> db.updatePassword(player.getUUID(), hash)),
                                 "password change for " + username, player, stored -> {
                                     if (stored) {
-                                        player.displayClientMessage(Messages.passwordChanged(), false);
+                                        player.sendSystemMessage(Messages.passwordChanged());
                                         LOGGER.info("Player {} changed their password", username);
                                     } else {
-                                        player.displayClientMessage(Messages.databaseError(), false);
+                                        player.sendSystemMessage(Messages.databaseError());
                                     }
                                 });
                     });
@@ -663,7 +663,7 @@ public final class VouchCommands {
         AuthManager authManager = AuthManager.getInstance();
 
         if (!authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.mustLoginFirstClickable(), false);
+            player.sendSystemMessage(Messages.mustLoginFirstClickable());
             return 0;
         }
 
@@ -898,7 +898,7 @@ public final class VouchCommands {
         ServerPlayer player = source.getPlayer();
 
         if (!AuthManager.getInstance().isAuthenticated(player)) {
-            player.displayClientMessage(Messages.mustLoginFirstClickable(), false);
+            player.sendSystemMessage(Messages.mustLoginFirstClickable());
             return 0;
         }
 
@@ -913,7 +913,7 @@ public final class VouchCommands {
         mod.onMain(db.getPremiumOverrideStatus(username),
                 "premium override lookup for " + username, player, status -> {
                     if (status == PremiumOverrideStatus.MARKED_ONLINE) {
-                        player.displayClientMessage(Messages.premiumAlreadyMarkedOnline(), false);
+                        player.sendSystemMessage(Messages.premiumAlreadyMarkedOnline());
                         return;
                     }
 
@@ -922,7 +922,7 @@ public final class VouchCommands {
                                 if (player.hasDisconnected()) return;
 
                                 if (!isPremium) {
-                                    player.displayClientMessage(Messages.premiumMarkedOnlineNotPremium(), false);
+                                    player.sendSystemMessage(Messages.premiumMarkedOnlineNotPremium());
                                     return;
                                 }
 
@@ -930,10 +930,10 @@ public final class VouchCommands {
                                         "premium opt-in for " + username, player, success -> {
                                             if (player.hasDisconnected()) return;
                                             if (success) {
-                                                player.displayClientMessage(Messages.premiumMarkedOnline(), false);
+                                                player.sendSystemMessage(Messages.premiumMarkedOnline());
                                                 LOGGER.info("Player {} opted into premium auto-login", username);
                                             } else {
-                                                player.displayClientMessage(Messages.databaseError(), false);
+                                                player.sendSystemMessage(Messages.databaseError());
                                             }
                                         });
                             });
@@ -984,7 +984,7 @@ public final class VouchCommands {
         if (RateLimiter.getInstance().getBlockRemaining(ip.get()).isZero()) {
             return false;
         }
-        player.displayClientMessage(Messages.tooManyAttempts(), false);
+        player.sendSystemMessage(Messages.tooManyAttempts());
         return true;
     }
 
@@ -993,11 +993,11 @@ public final class VouchCommands {
         int maxLen = getMaxPasswordLength();
 
         if (password.length() < minLen) {
-            player.displayClientMessage(Messages.passwordTooShort(minLen), false);
+            player.sendSystemMessage(Messages.passwordTooShort(minLen));
             return false;
         }
         if (password.length() > maxLen) {
-            player.displayClientMessage(Messages.passwordTooLong(maxLen), false);
+            player.sendSystemMessage(Messages.passwordTooLong(maxLen));
             return false;
         }
         return true;
@@ -1037,7 +1037,7 @@ public final class VouchCommands {
      */
     static void sendProcessingMessage(ServerPlayer player) {
         if (VouchConfigManager.getInstance().showProcessingMessage()) {
-            player.displayClientMessage(Messages.processing(), false);
+            player.sendSystemMessage(Messages.processing());
         }
     }
 
@@ -1046,9 +1046,9 @@ public final class VouchCommands {
      */
     private static boolean isPlayerOp(ServerPlayer player) {
         try {
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server != null) {
-                return server.getPlayerList().isOp(player.getGameProfile());
+                return server.getPlayerList().isOp(player.nameAndId());
             }
         } catch (Exception e) {
             LOGGER.warn("Could not check OP status for player {}", player.getName().getString());

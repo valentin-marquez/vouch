@@ -99,7 +99,7 @@ public abstract class PreAuthCommandMixin {
      */
     @Unique
     private void vouch$notifyBlocked(ServerPlayer target, Optional<String> suggestion) {
-        MinecraftServer server = target.getServer();
+        MinecraftServer server = target.level().getServer();
         if (server == null) {
             return;
         }
@@ -113,7 +113,7 @@ public abstract class PreAuthCommandMixin {
                         .append(message)
                         .append(Component.literal(" /" + suggestion.get()).withStyle(ChatFormatting.GRAY));
             }
-            target.displayClientMessage(message, false);
+            target.sendSystemMessage(message);
         });
     }
 }

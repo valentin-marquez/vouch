@@ -1,5 +1,6 @@
 package com.nozz.vouch.util.neoforge;
 
+import com.nozz.vouch.util.PermissionHelper;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.permission.PermissionAPI;
@@ -46,12 +47,12 @@ public final class PermissionHelperImpl {
     public static boolean hasPermission(CommandSourceStack source, String permission, int defaultOpLevel) {
         // For non-player sources (console, command blocks), use OP level check
         if (!source.isPlayer()) {
-            return source.hasPermission(defaultOpLevel);
+            return PermissionHelper.permissionSetHasLevel(source.permissions(), defaultOpLevel);
         }
 
         ServerPlayer player = source.getPlayer();
         if (player == null) {
-            return source.hasPermission(defaultOpLevel);
+            return PermissionHelper.permissionSetHasLevel(source.permissions(), defaultOpLevel);
         }
 
         // Try to get the registered permission node
@@ -62,11 +63,11 @@ public final class PermissionHelperImpl {
                 return result;
             } catch (Exception e) {
                 // Fallback to OP level on any error
-                return source.hasPermission(defaultOpLevel);
+                return PermissionHelper.permissionSetHasLevel(source.permissions(), defaultOpLevel);
             }
         }
 
         // Node not registered, fall back to OP level
-        return source.hasPermission(defaultOpLevel);
+        return PermissionHelper.permissionSetHasLevel(source.permissions(), defaultOpLevel);
     }
 }

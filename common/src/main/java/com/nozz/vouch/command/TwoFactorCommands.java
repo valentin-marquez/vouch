@@ -74,12 +74,12 @@ public final class TwoFactorCommands {
 
         AuthMode authMode = VouchConfigManager.getInstance().getAuthMode();
         if (!authMode.usesTotp()) {
-            player.displayClientMessage(LangManager.getInstance().getTextWithPrefix("vouch.auth.mode.2fa_disabled"), false);
+            player.sendSystemMessage(LangManager.getInstance().getTextWithPrefix("vouch.auth.mode.2fa_disabled"));
             return 0;
         }
 
         if (!authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.mustLoginFirstClickable(), false);
+            player.sendSystemMessage(Messages.mustLoginFirstClickable());
             return 0;
         }
 
@@ -93,7 +93,7 @@ public final class TwoFactorCommands {
                     }
 
                     if (has2FA) {
-                        player.displayClientMessage(Messages.twoFactorAlreadyEnabled(), false);
+                        player.sendSystemMessage(Messages.twoFactorAlreadyEnabled());
                         CommandVisibility.resend(player);
                         return;
                     }
@@ -108,17 +108,17 @@ public final class TwoFactorCommands {
                     String otpAuthUri = TOTPEngine.generateOtpAuthUri(secret, accountName, issuer);
 
                     if (QRMapRenderer.sendQRCodeMap(player, otpAuthUri)) {
-                        player.displayClientMessage(Messages.twoFactorSetupInstructionsClickable(), false);
-                        player.displayClientMessage(Messages.twoFactorManualSecret(secret), false);
+                        player.sendSystemMessage(Messages.twoFactorSetupInstructionsClickable());
+                        player.sendSystemMessage(Messages.twoFactorManualSecret(secret));
                         LOGGER.info("2FA setup initiated for player {}", accountName);
                     } else {
-                        player.displayClientMessage(Messages.twoFactorSetupFailed(), false);
+                        player.sendSystemMessage(Messages.twoFactorSetupFailed());
                         LOGGER.error("Failed to send QR code to player {}", accountName);
                     }
                 },
                 // has2FAEnabled fails closed. Starting a setup without knowing whether one
                 // already exists would overwrite a working secret with a pending one.
-                () -> player.displayClientMessage(Messages.databaseConnectionError(), false));
+                () -> player.sendSystemMessage(Messages.databaseConnectionError()));
 
         return 1;
     }
@@ -153,7 +153,7 @@ public final class TwoFactorCommands {
 
         String code = StringArgumentType.getString(context, ARG_CODE).replaceAll("\\s+", "");
         if (!isValidCodeFormat(code)) {
-            player.displayClientMessage(Messages.twoFactorInvalidCode(), false);
+            player.sendSystemMessage(Messages.twoFactorInvalidCode());
             return 0;
         }
 
@@ -161,7 +161,7 @@ public final class TwoFactorCommands {
         PlayerSession session = authManager.getSession(player.getUUID());
 
         if (session == null) {
-            player.displayClientMessage(Messages.sessionExpired(), false);
+            player.sendSystemMessage(Messages.sessionExpired());
             return 0;
         }
 
@@ -174,7 +174,7 @@ public final class TwoFactorCommands {
             return verifyLogin(player, session, code, ip);
         }
 
-        player.displayClientMessage(Messages.twoFactorNothingPending(), false);
+        player.sendSystemMessage(Messages.twoFactorNothingPending());
         return 0;
     }
 
@@ -187,7 +187,7 @@ public final class TwoFactorCommands {
         RateLimitDecision.forTwoFactorCode(valid).applyTo(RateLimiter.getInstance(), ip);
 
         if (!valid) {
-            player.displayClientMessage(Messages.twoFactorInvalidCode(), false);
+            player.sendSystemMessage(Messages.twoFactorInvalidCode());
             session.recordFailedAttempt();
             LOGGER.debug("Invalid 2FA setup code from player {}", player.getName().getString());
             return 0;
@@ -202,7 +202,7 @@ public final class TwoFactorCommands {
                     db.registerPlayerWith2FA(player.getUUID(), username, secret),
                     "2FA-only registration of " + username, player, success -> {
                         if (!success) {
-                            player.displayClientMessage(Messages.databaseError(), false);
+                            player.sendSystemMessage(Messages.databaseError());
                             LOGGER.error("Failed to register player {} with 2FA", username);
                             return;
                         }
@@ -219,7 +219,7 @@ public final class TwoFactorCommands {
             VouchMod.getInstance().onMain(db.storeTOTPSecret(player.getUUID(), secret),
                     "2FA enrolment of " + username, player, success -> {
                         if (!success) {
-                            player.displayClientMessage(Messages.databaseError(), false);
+                            player.sendSystemMessage(Messages.databaseError());
                             LOGGER.error("Failed to store 2FA secret for player {}", username);
                             return;
                         }
@@ -227,7 +227,7 @@ public final class TwoFactorCommands {
                         session.set2FAEnabled(true);
                         QRMapRenderer.removeQRMap(player);
 
-                        player.displayClientMessage(Messages.twoFactorEnabled(), false);
+                        player.sendSystemMessage(Messages.twoFactorEnabled());
                         // Enabling 2FA swaps `setup` for `disable` in the player's tree.
                         CommandVisibility.resend(player);
                         LOGGER.info("2FA enabled for player {}", username);
@@ -248,7 +248,7 @@ public final class TwoFactorCommands {
         VouchMod.getInstance().onMain(db.getTOTPSecret(player.getUUID()),
                 "2FA secret for " + username, player, secretOpt -> {
                     if (secretOpt.isEmpty()) {
-                        player.displayClientMessage(Messages.twoFactorNotEnabled(), false);
+                        player.sendSystemMessage(Messages.twoFactorNotEnabled());
                         return;
                     }
 
@@ -261,7 +261,7 @@ public final class TwoFactorCommands {
                         session.recordFailedAttempt();
 
                         if (session.isRateLimited()) {
-                            player.displayClientMessage(Messages.tooManyAttempts(), false);
+                            player.sendSystemMessage(Messages.tooManyAttempts());
                         }
 
                         LOGGER.debug("Invalid 2FA login code from player {}", username);
@@ -307,7 +307,7 @@ public final class TwoFactorCommands {
         AuthManager authManager = AuthManager.getInstance();
 
         if (!authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.mustLoginFirstClickable(), false);
+            player.sendSystemMessage(Messages.mustLoginFirstClickable());
             return 0;
         }
 
@@ -320,7 +320,7 @@ public final class TwoFactorCommands {
 
         String code = StringArgumentType.getString(context, ARG_CODE).replaceAll("\\s+", "");
         if (!isValidCodeFormat(code)) {
-            player.displayClientMessage(Messages.twoFactorInvalidCode(), false);
+            player.sendSystemMessage(Messages.twoFactorInvalidCode());
             return 0;
         }
 
@@ -330,7 +330,7 @@ public final class TwoFactorCommands {
 
         mod.onMain(db.getTOTPSecret(player.getUUID()), "2FA secret for " + username, player, secretOpt -> {
             if (secretOpt.isEmpty()) {
-                player.displayClientMessage(Messages.twoFactorNotEnabled(), false);
+                player.sendSystemMessage(Messages.twoFactorNotEnabled());
                 return;
             }
 
@@ -338,14 +338,14 @@ public final class TwoFactorCommands {
             RateLimitDecision.forTwoFactorCode(valid).applyTo(RateLimiter.getInstance(), ip);
 
             if (!valid) {
-                player.displayClientMessage(Messages.twoFactorInvalidCode(), false);
+                player.sendSystemMessage(Messages.twoFactorInvalidCode());
                 LOGGER.debug("Invalid 2FA disable code from player {}", username);
                 return;
             }
 
             mod.onMain(db.disable2FA(player.getUUID()), "2FA removal for " + username, player, success -> {
                 if (!success) {
-                    player.displayClientMessage(Messages.databaseError(), false);
+                    player.sendSystemMessage(Messages.databaseError());
                     return;
                 }
                 PlayerSession session = authManager.getSession(player.getUUID());
@@ -353,7 +353,7 @@ public final class TwoFactorCommands {
                     session.set2FAEnabled(false);
                 }
 
-                player.displayClientMessage(Messages.twoFactorDisabled(), false);
+                player.sendSystemMessage(Messages.twoFactorDisabled());
                 // Disabling swaps `disable` back for `setup` in the player's tree.
                 CommandVisibility.resend(player);
                 LOGGER.info("2FA disabled for player {}", username);
@@ -384,7 +384,7 @@ public final class TwoFactorCommands {
         AuthManager authManager = AuthManager.getInstance();
 
         if (!authManager.isAuthenticated(player)) {
-            player.displayClientMessage(Messages.mustLoginFirstClickable(), false);
+            player.sendSystemMessage(Messages.mustLoginFirstClickable());
             return 0;
         }
 
@@ -400,11 +400,11 @@ public final class TwoFactorCommands {
                         CommandVisibility.resend(player);
                     }
 
-                    player.displayClientMessage(has2FA
+                    player.sendSystemMessage(has2FA
                             ? Messages.twoFactorStatusEnabled()
-                            : Messages.twoFactorStatusDisabledClickable(), false);
+                            : Messages.twoFactorStatusDisabledClickable());
                 },
-                () -> player.displayClientMessage(Messages.databaseConnectionError(), false));
+                () -> player.sendSystemMessage(Messages.databaseConnectionError()));
 
         return 1;
     }
@@ -425,7 +425,7 @@ public final class TwoFactorCommands {
         if (RateLimiter.getInstance().getBlockRemaining(ip.get()).isZero()) {
             return false;
         }
-        player.displayClientMessage(Messages.tooManyAttempts(), false);
+        player.sendSystemMessage(Messages.tooManyAttempts());
         return true;
     }
 

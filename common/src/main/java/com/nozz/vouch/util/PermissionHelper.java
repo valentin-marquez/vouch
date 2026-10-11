@@ -5,6 +5,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
+import net.minecraft.server.permissions.PermissionSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -150,6 +153,24 @@ public final class PermissionHelper {
     }
 
     /**
+     * Vanilla's op-level check on the permission model Minecraft 26.x uses in place of
+     * {@code hasPermission(int)}.
+     *
+     * <p>Anything above {@link Defaults#MAX_VANILLA_OP_LEVEL} is unsatisfiable, which is
+     * what keeps {@link Defaults#EXPLICIT_GRANT_ONLY} nodes out of reach of every OP
+     * level; {@code PermissionLevel.byId} must never see such a value.
+     */
+    public static boolean permissionSetHasLevel(PermissionSet permissions, int level) {
+        if (level > Defaults.MAX_VANILLA_OP_LEVEL) {
+            return false;
+        }
+        if (level <= Defaults.USER_COMMAND) {
+            return true;
+        }
+        return permissions.hasPermission(new Permission.HasCommandLevel(PermissionLevel.byId(level)));
+    }
+
+    /**
      * Check a node using the default OP level declared for it in {@link Nodes}.
      */
     public static boolean hasPermission(CommandSourceStack source, Node node) {
@@ -240,7 +261,7 @@ public final class PermissionHelper {
         if (player == null) {
             return false;
         }
-        return hasOnlineUuid(player.getUUID(), player.getGameProfile().getName());
+        return hasOnlineUuid(player.getUUID(), player.getGameProfile().name());
     }
 
     /**

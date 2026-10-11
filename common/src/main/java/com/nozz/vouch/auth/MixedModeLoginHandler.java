@@ -212,8 +212,8 @@ public final class MixedModeLoginHandler {
     private VerificationResult toResult(String username, PremiumVerifier.SessionResult session) {
         if (session.outcome() == PremiumLookup.PREMIUM && session.profile().isPresent()) {
             GameProfile profile = session.profile().get();
-            LOGGER.info("Premium verification successful for {} (UUID: {})", profile.getName(), profile.getId());
-            recordVerifiedPremiumLogin(profile.getId(), profile.getName());
+            LOGGER.info("Premium verification successful for {} (UUID: {})", profile.name(), profile.id());
+            recordVerifiedPremiumLogin(profile.id(), profile.name());
             return VerificationResult.verified(profile);
         }
 

@@ -34,9 +34,9 @@ repositories {
 dependencies {
     neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
 
-    modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
+    implementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
 
-    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    common(project(path: ':common')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 
     def vouchLibs = [
@@ -68,7 +68,10 @@ processResources {
 
 shadowJar {
     configurations = [project.configurations.shadowBundle]
-    archiveClassifier = 'dev-shadow'
+    dependsOn jar
+    mainSpec.sourcePaths.clear()
+    from(zipTree(jar.archiveFile))
+    archiveClassifier = null
 
     relocate 'org.bouncycastle', 'com.nozz.vouch.libs.bc'
     relocate 'com.google.zxing', 'com.nozz.vouch.libs.zxing'
@@ -79,8 +82,11 @@ shadowJar {
     relocate 'com.mysql', 'com.nozz.vouch.libs.mysql'
     relocate 'org.checkerframework', 'com.nozz.vouch.libs.checkerframework'
 }
-remapJar {
-    inputFile.set shadowJar.archiveFile
+// The raw module jar feeds shadowJar, which is the distributable artifact.
+jar {
+    archiveClassifier = 'raw'
 }
+
+assemble.dependsOn shadowJar
 
 apply from: rootProject.file('gradle/shadow-sanitization.gradle')

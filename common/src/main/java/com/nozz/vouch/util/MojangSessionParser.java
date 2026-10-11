@@ -1,11 +1,14 @@
 package com.nozz.vouch.util;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,11 +57,8 @@ public final class MojangSessionParser {
                 return Optional.empty();
             }
 
-            GameProfile profile = new GameProfile(uuid, name);
-            if (includeSkinProperties) {
-                copyProperties(root, profile);
-            }
-            return Optional.of(profile);
+            PropertyMap properties = includeSkinProperties ? readProperties(root) : PropertyMap.EMPTY;
+            return Optional.of(new GameProfile(uuid, name, properties));
         } catch (Exception e) {
             LOGGER.warn("Failed to parse Mojang session response: {}", e.getMessage());
             return Optional.empty();
@@ -94,15 +94,17 @@ public final class MojangSessionParser {
     }
 
     /**
-     * Copy the signed profile properties (textures/skin, cape) onto the profile.
+     * Read the signed profile properties (textures/skin, cape). A {@code GameProfile}
+     * is immutable, so they go into its constructor rather than onto it afterwards.
      * The signature must be preserved: clients reject unsigned textures.
      */
-    private static void copyProperties(JsonObject root, GameProfile profile) {
+    private static PropertyMap readProperties(JsonObject root) {
         JsonElement properties = root.get("properties");
         if (properties == null || !properties.isJsonArray()) {
-            return;
+            return PropertyMap.EMPTY;
         }
 
+        Multimap<String, Property> collected = ArrayListMultimap.create();
         JsonArray array = properties.getAsJsonArray();
         for (JsonElement element : array) {
             if (!element.isJsonObject()) {
@@ -119,7 +121,8 @@ public final class MojangSessionParser {
                     ? signature.getAsString()
                     : null;
 
-            profile.getProperties().put(name, new Property(name, value.getAsString(), signatureValue));
+            collected.put(name, new Property(name, value.getAsString(), signatureValue));
         }
+        return new PropertyMap(collected);
     }
 }

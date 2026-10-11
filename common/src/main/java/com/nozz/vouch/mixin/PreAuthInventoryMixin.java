@@ -3,7 +3,8 @@ package com.nozz.vouch.mixin;
 import com.nozz.vouch.auth.AuthManager;
 import net.minecraft.network.protocol.game.ServerboundContainerButtonClickPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
-import net.minecraft.network.protocol.game.ServerboundPickItemPacket;
+import net.minecraft.network.protocol.game.ServerboundPickItemFromBlockPacket;
+import net.minecraft.network.protocol.game.ServerboundPickItemFromEntityPacket;
 import net.minecraft.network.protocol.game.ServerboundPlaceRecipePacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
@@ -82,8 +83,15 @@ public abstract class PreAuthInventoryMixin {
     /**
      * Block creative middle-click pick-block, which writes to the hotbar.
      */
-    @Inject(method = "handlePickItem", at = @At("HEAD"), cancellable = true)
-    private void vouch$onPickFromInventory(ServerboundPickItemPacket packet, CallbackInfo ci) {
+    @Inject(method = "handlePickItemFromBlock", at = @At("HEAD"), cancellable = true)
+    private void vouch$onPickFromBlock(ServerboundPickItemFromBlockPacket packet, CallbackInfo ci) {
+        if (vouch$denyInventoryAction()) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "handlePickItemFromEntity", at = @At("HEAD"), cancellable = true)
+    private void vouch$onPickFromEntity(ServerboundPickItemFromEntityPacket packet, CallbackInfo ci) {
         if (vouch$denyInventoryAction()) {
             ci.cancel();
         }
@@ -121,7 +129,7 @@ public abstract class PreAuthInventoryMixin {
             return false;
         }
 
-        MinecraftServer server = currentPlayer.getServer();
+        MinecraftServer server = currentPlayer.level().getServer();
         if (server != null) {
             server.execute(() -> {
                 if (!currentPlayer.hasDisconnected() && currentPlayer.containerMenu != null) {

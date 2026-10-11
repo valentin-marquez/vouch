@@ -240,7 +240,7 @@ public abstract class ServerLoginNetworkHandlerMixin {
                         case VERIFIED -> {
                             GameProfile profile = result.profile().orElseThrow();
                             LOGGER.info("Premium auto-login: {} verified as {} (UUID: {})",
-                                    username, profile.getName(), profile.getId());
+                                    username, profile.name(), profile.id());
                             startClientVerification(profile);
                         }
                         case REJECTED -> {

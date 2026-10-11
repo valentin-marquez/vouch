@@ -29,7 +29,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
     private void vouch$onChatMessage(ServerboundChatPacket packet, CallbackInfo ci) {
         if (!AuthManager.getInstance().isAuthenticated(player)) {
             // Block chat messages for unauthenticated players
-            player.displayClientMessage(Messages.chatBlocked(), false);
+            player.sendSystemMessage(Messages.chatBlocked());
             ci.cancel();
         }
     }

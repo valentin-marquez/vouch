@@ -373,7 +373,7 @@ public final class VouchMod {
                     if (player.hasDisconnected()) {
                         return;
                     }
-                    player.displayClientMessage(Messages.databaseConnectionError(), false);
+                    player.sendSystemMessage(Messages.databaseConnectionError());
                     authManager.addPendingPlayer(player, false);
                     CommandVisibility.resend(player);
                 });
@@ -464,13 +464,13 @@ public final class VouchMod {
                             // database outage. Jail, not access.
                             () -> {
                                 if (serverPlayer.hasDisconnected()) return;
-                                serverPlayer.displayClientMessage(Messages.databaseConnectionError(), false);
+                                serverPlayer.sendSystemMessage(Messages.databaseConnectionError());
                                 jailPlayer(serverPlayer, authManager, dbManager);
                             });
                 },
                 () -> {
                     if (serverPlayer.hasDisconnected()) return;
-                    serverPlayer.displayClientMessage(Messages.databaseConnectionError(), false);
+                    serverPlayer.sendSystemMessage(Messages.databaseConnectionError());
                     jailPlayer(serverPlayer, authManager, dbManager);
                 });
     }
@@ -544,7 +544,7 @@ public final class VouchMod {
                            ServerPlayer player, Consumer<T> consumer) {
         onMain(future, context, consumer, () -> {
             if (player != null && !player.hasDisconnected()) {
-                player.displayClientMessage(Messages.internalError(), false);
+                player.sendSystemMessage(Messages.internalError());
             }
         });
     }
