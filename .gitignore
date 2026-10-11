@@ -44,3 +44,4 @@ logs/
 CLAUDE.md
 .claude.json
 .claude.local.json
+e2e/last-server.log
