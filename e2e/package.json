@@ -1,0 +1,1 @@
+{ "name": "vouch-e2e", "private": true, "type": "module", "dependencies": { "mineflayer": "^4.37.1" } }
